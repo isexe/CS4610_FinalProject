@@ -12,6 +12,9 @@ public class Projectile : MonoBehaviour
     [SerializeField]
     private WeaponType _type;
 
+    private float birthTime;
+    private float waveFrequency = 1f;
+
     // This public prop makes the field _type and takes ation when it is set
     public WeaponType type
     {
@@ -31,6 +34,8 @@ public class Projectile : MonoBehaviour
         bndCheck = GetComponent<BoundsCheck>();
         rend = GetComponent<Renderer>();
         rigid = GetComponent<Rigidbody>();
+
+        birthTime = Time.time;
     }
 
     void Update()
@@ -48,4 +53,34 @@ public class Projectile : MonoBehaviour
         rend.material.color = def.projectileColor;
     }
 
+
+    public void InterpolateLeft()
+    {
+        float age = Time.time - birthTime;
+
+        float theta = Mathf.PI * 3 * age / (waveFrequency);
+        float sin = Mathf.Sin(theta);
+
+        Vector3 tempV = new Vector3(-sin, 1, 0);
+        tempV.Normalize();
+        tempV *= Main.GetWeaponDefinition(type).velocity;
+        rigid.velocity = tempV;
+
+        Invoke("InterpolateLeft", .1f);
+    }
+
+    public void InterpolateRight()
+    {
+        float age = Time.time - birthTime;
+
+        float theta = Mathf.PI * 3 * age / waveFrequency;
+        float sin = Mathf.Sin(theta);
+
+        Vector3 tempV = new Vector3(sin, 1, 0);
+        tempV.Normalize();
+        tempV *= Main.GetWeaponDefinition(type).velocity;
+        rigid.velocity = tempV;
+
+        Invoke("InterpolateRight", .1f);
+    }
 }

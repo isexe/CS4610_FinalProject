@@ -33,6 +33,9 @@ public class Hero : MonoBehaviour
     // Create a WeaponFireDelegate filed named fireDelegate
     public WeaponFireDelegate fireDelegate;
 
+    // private variable to charge weapon
+    private float chargeTime = 0;
+
     public float shieldLevel
     {
         get
@@ -79,16 +82,19 @@ public class Hero : MonoBehaviour
 
         // Rotate the ship to make it feel more dynamic
         transform.rotation = Quaternion.Euler(yAxis * pitchMult, xAxis * rollMult, 0);
-    
-        //Add to the end of update
-        //if (Input.GetKeyDown(KeyCode.Space))
-        //{
-        //    TempFire();
-        //}
 
         if(Input.GetAxis("Jump") == 1 && fireDelegate != null)
         {
-            fireDelegate();
+            chargeTime += Time.deltaTime;
+            if (chargeTime > Main.GetWeaponDefinition(weapons[0].type).chargeTime)
+            {
+                chargeTime = 0;
+                fireDelegate();
+            }
+        }
+        else
+        {
+            chargeTime = 0;
         }
     }
 

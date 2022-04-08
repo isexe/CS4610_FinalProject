@@ -25,6 +25,7 @@ public class WeaponDefinition
     public float continousDamage = 0;
     public float delayBetweenShots = 0;
     public float velocity = 20;
+    public float chargeTime = 0;
 }
 
 public class Weapon : MonoBehaviour
@@ -110,6 +111,23 @@ public class Weapon : MonoBehaviour
                 p.transform.rotation = Quaternion.AngleAxis(-10, Vector3.back);
                 p.rigid.velocity = p.transform.rotation * vel;
                 break;
+
+            //// TODO implement phaser firing
+            case WeaponType.phaser:
+                p = MakeProjectile();
+                p.InterpolateLeft();
+                p = MakeProjectile();
+                p.InterpolateRight();
+                break;
+
+            // TODO implement laser firing
+            case WeaponType.laser:
+                p = MakeProjectile();
+                p.rigid.velocity = vel;
+
+                break;
+
+            // TODO implement missile firing
         }
     }
 
