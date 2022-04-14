@@ -188,7 +188,7 @@ public class Enemy4 : Enemy
         }
 
         // if not protected calculate damage
-        prtHit.health -= Main.GetWeaponDefinition(WeaponType.laser).damageOnHit;
+        prtHit.health -= Main.GetWeaponDefinition(WeaponType.laser).continousDamage;
         // Show damage on part
         ShowLocalizedDamage(prtHit.mat);
         if (prtHit.health <= 0)

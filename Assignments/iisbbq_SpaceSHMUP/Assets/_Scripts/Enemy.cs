@@ -129,7 +129,7 @@ public class Enemy : MonoBehaviour
     public virtual void HitByLaser(GameObject hitObject)
     {
         ShowDamage();
-        float damageDealt = Main.GetWeaponDefinition(WeaponType.laser).damageOnHit;
+        float damageDealt = Main.GetWeaponDefinition(WeaponType.laser).continousDamage;
         health -= damageDealt;
         if (health <= 0)
         {

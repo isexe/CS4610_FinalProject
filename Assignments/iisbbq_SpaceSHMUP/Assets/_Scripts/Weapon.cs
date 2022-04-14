@@ -133,6 +133,7 @@ public class Weapon : MonoBehaviour
             // TODO implement missile firing
             case WeaponType.missile:
                 p = MakeProjectile();
+                p.FindTarget();
                 p.rigid.velocity = vel;
                 break;
         }
@@ -164,7 +165,7 @@ public class Weapon : MonoBehaviour
         Main.S.isFiring = true;
         laser.positionCount = 2;
         laserFiring = true;
-        Invoke("StopLaser", 2f);
+        Invoke("StopLaser", Main.GetWeaponDefinition(type).delayBetweenShots);
     }
 
     public void StopLaser()

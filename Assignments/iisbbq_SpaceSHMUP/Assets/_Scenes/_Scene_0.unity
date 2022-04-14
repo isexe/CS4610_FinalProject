@@ -628,7 +628,7 @@ MonoBehaviour:
   - {fileID: 439231269559438953, guid: 63effe1852473d64b8d432a4888d489a, type: 3}
   - {fileID: 439231269559438953, guid: 63effe1852473d64b8d432a4888d489a, type: 3}
   - {fileID: 1583379240447700862, guid: 4528293c7ec42e64e9834832cd71b49d, type: 3}
-  enemySpawnPerSecond: 0.5
+  enemySpawnPerSecond: 1
   enemyDefaultPadding: 1.5
   weaponDefinitions:
   - type: 1
@@ -666,10 +666,10 @@ MonoBehaviour:
     color: {r: 1, g: 0.09877367, b: 0, a: 1}
     projectilePrefab: {fileID: 6057949513277619718, guid: 1115e42089d951f46899e4a482d94415, type: 3}
     projectileColor: {r: 1, g: 0, b: 0, a: 1}
-    damageOnHit: 0.5
-    continousDamage: 0
-    delayBetweenShots: 0
-    velocity: 10
+    damageOnHit: 0
+    continousDamage: 0.5
+    delayBetweenShots: 2
+    velocity: 0
     chargeTime: 2
   - type: 4
     letter: M
@@ -679,7 +679,7 @@ MonoBehaviour:
     damageOnHit: 10
     continousDamage: 0
     delayBetweenShots: 1
-    velocity: 10
+    velocity: 30
     chargeTime: 0
   - type: 6
     letter: O
@@ -915,7 +915,7 @@ LineRenderer:
   m_Positions: []
   m_Parameters:
     serializedVersion: 3
-    widthMultiplier: 0.2
+    widthMultiplier: 0.25
     widthCurve:
       serializedVersion: 2
       m_Curve:
@@ -1016,7 +1016,7 @@ LineRenderer:
   m_Positions: []
   m_Parameters:
     serializedVersion: 3
-    widthMultiplier: 0.2
+    widthMultiplier: 0.25
     widthCurve:
       serializedVersion: 2
       m_Curve:
@@ -1117,7 +1117,7 @@ LineRenderer:
   m_Positions: []
   m_Parameters:
     serializedVersion: 3
-    widthMultiplier: 0.2
+    widthMultiplier: 0.25
     widthCurve:
       serializedVersion: 2
       m_Curve:
@@ -1218,7 +1218,7 @@ LineRenderer:
   m_Positions: []
   m_Parameters:
     serializedVersion: 3
-    widthMultiplier: 0.2
+    widthMultiplier: 0.25
     widthCurve:
       serializedVersion: 2
       m_Curve:
@@ -1319,7 +1319,7 @@ LineRenderer:
   m_Positions: []
   m_Parameters:
     serializedVersion: 3
-    widthMultiplier: 0.2
+    widthMultiplier: 0.25
     widthCurve:
       serializedVersion: 2
       m_Curve:
