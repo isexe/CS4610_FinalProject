@@ -170,4 +170,48 @@ public class Enemy4 : Enemy
                 break;
         }
     }
+
+    public override void HitByLaser(GameObject hitObject)
+    {
+        Part prtHit = FindPart(hitObject);
+        // check whether this part is still protected
+        if (prtHit.protectedBy != null)
+        {
+            foreach (string s in prtHit.protectedBy)
+            {
+                // check if parts protecting it are destroyed
+                if (!Destroyed(s))
+                {
+                    return;
+                }
+            }
+        }
+
+        // if not protected calculate damage
+        prtHit.health -= Main.GetWeaponDefinition(WeaponType.laser).damageOnHit;
+        // Show damage on part
+        ShowLocalizedDamage(prtHit.mat);
+        if (prtHit.health <= 0)
+        {
+            // if destroyed deactivate part
+            prtHit.go.SetActive(false);
+        }
+
+        // check if all is destroyed
+        bool allDestroyed = true;
+        foreach (Part prt in parts)
+        {
+            if (!Destroyed(prt))
+            {
+                allDestroyed = false;
+                break;
+            }
+        }
+        if (allDestroyed)  //if completely destoyed
+        {
+            Main.S.ShipDestroyed(this); //tell main
+            Destroy(this.gameObject); //destroy enemy GO
+        }
+
+    }
 }

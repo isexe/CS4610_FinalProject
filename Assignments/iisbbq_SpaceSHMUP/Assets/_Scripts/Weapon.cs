@@ -7,9 +7,9 @@ public enum WeaponType
     none,       // default
     blaster,    // a simple blaster
     spread,     // two shots at a time
-    phaser,     // TODO shots that move in waves
+    phaser,     // TODO// shots that move in waves
     missile,    // TODO homing missiles
-    laser,      // TODO DoT
+    laser,      // TODO// DoT
     shield      // raise shield level
 }
 
@@ -40,9 +40,14 @@ public class Weapon : MonoBehaviour
 
     private Renderer collarRend;
 
+    private LineRenderer laser;
+    private bool laserFiring;
+
     // Start is called before the first frame update
     void Start()
     {
+        laser = gameObject.GetComponent<LineRenderer>();
+
         collar = transform.Find("Collar").gameObject;
         collarRend = collar.GetComponent<Renderer>();
 
@@ -112,7 +117,7 @@ public class Weapon : MonoBehaviour
                 p.rigid.velocity = p.transform.rotation * vel;
                 break;
 
-            //// TODO implement phaser firing
+            // TODO// implement phaser firing
             case WeaponType.phaser:
                 p = MakeProjectile();
                 p.InterpolateLeft();
@@ -122,12 +127,14 @@ public class Weapon : MonoBehaviour
 
             // TODO implement laser firing
             case WeaponType.laser:
-                p = MakeProjectile();
-                p.rigid.velocity = vel;
-
+                StartLaser();
                 break;
 
             // TODO implement missile firing
+            case WeaponType.missile:
+                p = MakeProjectile();
+                p.rigid.velocity = vel;
+                break;
         }
     }
 
@@ -150,5 +157,50 @@ public class Weapon : MonoBehaviour
         p.type = type;
         lastShotTime = Time.time;
         return (p);
+    }
+
+    public void StartLaser()
+    {
+        Main.S.isFiring = true;
+        laser.positionCount = 2;
+        laserFiring = true;
+        Invoke("StopLaser", 2f);
+    }
+
+    public void StopLaser()
+    {
+        Main.S.isFiring = false;
+        laser.positionCount = 0;
+        laserFiring = false;
+    }
+
+    private void FixedUpdate()
+    {
+        if (laserFiring)
+        {
+            laser.SetPosition(0, new Vector3(transform.position.x, transform.position.y+1, transform.position.z));
+            RaycastHit hit;
+            int layerMask = 1 << 9;
+            if(Physics.Raycast(transform.position, Vector3.up, out hit, Main.S.bndCheck.camHeight - transform.position.y, layerMask))
+            {
+                if(hit.transform.tag == "Enemy")
+                {
+                    laser.SetPosition(1, hit.point);
+                    Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.up) * hit.distance, Color.green);
+                    Enemy enemy = hit.transform.gameObject.GetComponent<Enemy>();
+                    enemy.HitByLaser(hit.collider.gameObject);
+                }
+                else
+                {
+                    laser.SetPosition(1, new Vector3(transform.position.x, Main.S.bndCheck.camHeight, transform.position.z));
+                }
+
+            }
+            else
+            {
+                laser.SetPosition(1, new Vector3(transform.position.x, Main.S.bndCheck.camHeight, transform.position.z));
+            }
+            
+        }
     }
 }

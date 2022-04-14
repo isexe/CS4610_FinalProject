@@ -19,7 +19,9 @@ public class Main : MonoBehaviour
         WeaponType.blaster, WeaponType.blaster, WeaponType.spread, WeaponType.shield
     };
 
-    private BoundsCheck bndCheck;
+    public bool isFiring;
+
+    public BoundsCheck bndCheck;
 
     public void ShipDestroyed(Enemy e)
     {

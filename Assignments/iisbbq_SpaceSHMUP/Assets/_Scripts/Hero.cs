@@ -83,7 +83,7 @@ public class Hero : MonoBehaviour
         // Rotate the ship to make it feel more dynamic
         transform.rotation = Quaternion.Euler(yAxis * pitchMult, xAxis * rollMult, 0);
 
-        if(Input.GetAxis("Jump") == 1 && fireDelegate != null)
+        if(Input.GetAxis("Jump") == 1 && fireDelegate != null && !Main.S.isFiring)
         {
             chargeTime += Time.deltaTime;
             if (chargeTime > Main.GetWeaponDefinition(weapons[0].type).chargeTime)

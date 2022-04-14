@@ -125,4 +125,22 @@ public class Enemy : MonoBehaviour
         }
         showingDamage = false;
     }
+
+    public virtual void HitByLaser(GameObject hitObject)
+    {
+        ShowDamage();
+        float damageDealt = Main.GetWeaponDefinition(WeaponType.laser).damageOnHit;
+        health -= damageDealt;
+        if (health <= 0)
+        {
+            // tell main that ship was destroyed
+            if (!notifiedOfDestruction)
+            {
+                Main.S.ShipDestroyed(this);
+            }
+            notifiedOfDestruction = true;
+            // destroy enemy
+            Destroy(this.gameObject);
+        }
+    }
 }

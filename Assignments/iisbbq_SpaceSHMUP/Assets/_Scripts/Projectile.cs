@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public class Projectile : MonoBehaviour
@@ -13,6 +14,7 @@ public class Projectile : MonoBehaviour
     private WeaponType _type;
 
     private float birthTime;
+    private Vector3 startPos;
     private float waveFrequency = 1f;
 
     // This public prop makes the field _type and takes ation when it is set
@@ -36,6 +38,7 @@ public class Projectile : MonoBehaviour
         rigid = GetComponent<Rigidbody>();
 
         birthTime = Time.time;
+        startPos = transform.position;
     }
 
     void Update()
@@ -43,6 +46,31 @@ public class Projectile : MonoBehaviour
         if(bndCheck.offUp)
         {
             Destroy(gameObject);
+        }
+
+        if(type == WeaponType.missile)
+        {
+            //print("implement tracking");
+            GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+            if (enemies.Length > 0)
+            {
+                GameObject closestEnemy = null;
+                float closestDistance = Mathf.Infinity;
+                foreach (GameObject enemy in enemies)
+                {
+                    float distance = Vector3.Distance(gameObject.transform.position, enemy.transform.position);
+                    if (distance < closestDistance)
+                    {
+                        closestEnemy = enemy;
+                        closestDistance = distance;
+                    }
+                }
+                //EditorGUIUtility.PingObject(closestEnemy);
+
+                transform.position = Vector3.Lerp(startPos, closestEnemy.transform.position, (Time.time - birthTime) / closestDistance);
+                transform.LookAt(gameObject.transform);
+            }
+            
         }
     }
 
