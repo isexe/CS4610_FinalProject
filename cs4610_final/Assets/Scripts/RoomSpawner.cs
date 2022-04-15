@@ -4,59 +4,68 @@ using UnityEngine;
 
 public class RoomSpawner : MonoBehaviour
 {
-    public bool spawned = false;
+    private string side;
+    private GameObject newRoom;
+    private GameObject currentRoom;
+    private Room roomInfo;
+    private GameObject roomsGO;
+    private Rooms rooms;
 
-    void Start(){
-        Invoke("Spawn", 1f);
+    void Awake(){
+        // get Rooms script from Rooms gameobject
+        roomsGO = GameObject.Find("Rooms");
+        rooms = roomsGO.GetComponent<Rooms>();
+        side = gameObject.name.Substring(gameObject.name.Length-1);
+        currentRoom = transform.parent.parent.gameObject;
+        roomInfo = currentRoom.GetComponent<Room>();
+        // Randomness to minimize conflicts
+        // better fixes but i'm lazy af
+        Invoke("Spawn", Random.Range(.1f,.2f));
     }
 
     void Spawn() {
-        // Find what side the spawner is on
-        string side = gameObject.name.Substring(gameObject.name.Length-1);
-
-        // get Rooms script from Rooms gameobject
-        GameObject roomsGO = GameObject.Find("Rooms");
-        Rooms rooms = roomsGO.GetComponent<Rooms>();
-
         // Using the side generate room from Rooms
         int randIndex;
-        GameObject temp;
         switch (side)
         {
-            case "T":
-                //print("top spawner");
-                randIndex = Random.Range(0, rooms.bottom.Length);
-                temp = Instantiate<GameObject>(rooms.bottom[randIndex], transform.position, rooms.bottom[randIndex].transform.rotation);
-                temp.transform.SetParent(roomsGO.transform, true);
+            case "N":
+                //print("north spawner");
+                randIndex = Random.Range(0, rooms.south.Length);
+                newRoom = Instantiate<GameObject>(rooms.south[randIndex], transform.position, rooms.south[randIndex].transform.rotation);
+                newRoom.transform.SetParent(roomsGO.transform, true);
                 break;
             
-            case "R":
-                //print("right spawner");
-                randIndex = Random.Range(0, rooms.left.Length);
-                temp = Instantiate<GameObject>(rooms.left[randIndex], transform.position, rooms.left[randIndex].transform.rotation);
-                temp.transform.SetParent(roomsGO.transform, true);
+            case "E":
+                //print("east spawner");
+                randIndex = Random.Range(0, rooms.west.Length);
+                newRoom = Instantiate<GameObject>(rooms.west[randIndex], transform.position, rooms.west[randIndex].transform.rotation);
+                newRoom.transform.SetParent(roomsGO.transform, true);
                 break;
             
-            case "B":
-                //print("bottom spawner");
-                randIndex = Random.Range(0, rooms.top.Length);
-                temp = Instantiate<GameObject>(rooms.top[randIndex], transform.position, rooms.top[randIndex].transform.rotation);
-                temp.transform.SetParent(roomsGO.transform, true);
+            case "S":
+                //print("south spawner");
+                randIndex = Random.Range(0, rooms.north.Length);
+                newRoom = Instantiate<GameObject>(rooms.north[randIndex], transform.position, rooms.north[randIndex].transform.rotation);
+                newRoom.transform.SetParent(roomsGO.transform, true);
                 break;
 
-            case "L":
-                //print("left spawner");
-                randIndex = Random.Range(0, rooms.right.Length);
-                temp = Instantiate<GameObject>(rooms.right[randIndex], transform.position, rooms.right[randIndex].transform.rotation);
-                temp.transform.SetParent(roomsGO.transform, true);
+            case "W":
+                //print("west spawner");
+                randIndex = Random.Range(0, rooms.east.Length);
+                newRoom = Instantiate<GameObject>(rooms.east[randIndex], transform.position, rooms.east[randIndex].transform.rotation);
+                newRoom.transform.SetParent(roomsGO.transform, true);
                 break;
-
-            default:
-                break;
-        } 
+        }
+        Room newRoomInfo = newRoom.GetComponent<Room>();
+        if(newRoomInfo != null){
+            newRoomInfo.SetNeighbor(currentRoom, side);
+        }
+        if(roomInfo != null){
+            roomInfo.spawnedNeighbor = true;
+        }
     }
 
-    void OnTriggerEnter2D(Collider2D other){
+    void OnTriggerEnter(Collider other){
         if(other.CompareTag("Room")){
             Destroy(gameObject);
         }
