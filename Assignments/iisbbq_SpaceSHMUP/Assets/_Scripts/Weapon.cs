@@ -133,8 +133,8 @@ public class Weapon : MonoBehaviour
             // TODO implement missile firing
             case WeaponType.missile:
                 p = MakeProjectile();
-                p.FindTarget();
                 p.rigid.velocity = vel;
+                p.FindTarget();
                 break;
         }
     }

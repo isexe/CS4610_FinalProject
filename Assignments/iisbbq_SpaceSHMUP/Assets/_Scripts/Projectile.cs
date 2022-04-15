@@ -104,17 +104,33 @@ public class Projectile : MonoBehaviour
                 }
             }
         }
-        print(target);
-        
     }
 
     public void Tracking()
     {
-        if(target == null)
+        if (target == null)
         {
+            //rigid.velocity = Vector3.up * Main.GetWeaponDefinition(type).velocity;
             return;
         }
+        else
+        {
+            //rigid.velocity = Vector3.zero;
+        }
+
+        //transform.position = Vector3.Lerp(transform.position, target.transform.position, .001f*Main.GetWeaponDefinition(type).velocity);
+
+        // TODO Need to add turning
+        // encapsulate the bullet in empty to offset rotation
+        // try swapping out lerp with move towards
+
+
+        ////Failed stuff
         Vector3 dir = target.transform.position - transform.position;
-        rigid.velocity = dir.normalized * Main.GetWeaponDefinition(type).velocity;
+        Vector3 vel = dir.normalized * Main.GetWeaponDefinition(type).velocity;
+        rigid.velocity = vel;
+
+        //// https://answers.unity.com/questions/39031/how-can-i-rotate-a-rigid-body-based-on-its-velocit.html
+        //transform.rotation = Quaternion.LookRotation(vel);
     }
 }
