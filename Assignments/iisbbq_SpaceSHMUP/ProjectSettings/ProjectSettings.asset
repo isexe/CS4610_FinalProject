@@ -670,6 +670,7 @@ PlayerSettings:
     Build: 0
     Collab: 0
     Game Performance: 0
+    Legacy Analytics: 0
     Purchasing: 0
     UDP: 0
     UNet: 1
@@ -687,11 +688,11 @@ PlayerSettings:
     m_VersionName: 
   apiCompatibilityLevel: 6
   activeInputHandler: 0
-  cloudProjectId: 5f31b624-107f-4170-a2b7-c7a032bd41ab
+  cloudProjectId: 
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: iisbbq_SpaceSHMUP
-  organizationId: das3x3bros4228
+  projectName: 
+  organizationId: 
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   virtualTexturingSupportEnabled: 0

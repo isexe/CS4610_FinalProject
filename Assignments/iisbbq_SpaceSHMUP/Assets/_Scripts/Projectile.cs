@@ -16,6 +16,8 @@ public class Projectile : MonoBehaviour
     private float birthTime;
     private GameObject target;
     private float waveFrequency = 1f;
+    private bool isHoming = false;
+    private float vel;
 
     // This public prop makes the field _type and takes ation when it is set
     public WeaponType type
@@ -38,6 +40,7 @@ public class Projectile : MonoBehaviour
         rigid = GetComponent<Rigidbody>();
 
         birthTime = Time.time;
+        vel = Main.GetWeaponDefinition(type).velocity;
     }
 
     void Update()
@@ -46,7 +49,17 @@ public class Projectile : MonoBehaviour
         {
             Destroy(gameObject);
         }
-        if (type == WeaponType.missile) Tracking();
+        if (type == WeaponType.missile){
+            if(target != null) Tracking();
+            else{
+                if(isHoming){
+                    rigid.velocity = transform.rotation.eulerAngles.normalized * vel;
+                } else{
+                    rigid.velocity = Vector3.forward * vel;
+                }
+            }
+            
+        }
     }
 
     public void SetType(WeaponType eType)
@@ -66,7 +79,7 @@ public class Projectile : MonoBehaviour
 
         Vector3 tempV = new Vector3(-sin, 1, 0);
         tempV.Normalize();
-        tempV *= Main.GetWeaponDefinition(type).velocity;
+        tempV *= vel;
         rigid.velocity = tempV;
 
         Invoke("InterpolateLeft", .1f);
@@ -81,7 +94,7 @@ public class Projectile : MonoBehaviour
 
         Vector3 tempV = new Vector3(sin, 1, 0);
         tempV.Normalize();
-        tempV *= Main.GetWeaponDefinition(type).velocity;
+        tempV *= vel;
         rigid.velocity = tempV;
 
         Invoke("InterpolateRight", .1f);
@@ -101,6 +114,7 @@ public class Projectile : MonoBehaviour
                 {
                     target = enemy;
                     closestDistance = distance;
+                    isHoming = true;
                 }
             }
         }
@@ -108,27 +122,21 @@ public class Projectile : MonoBehaviour
 
     public void Tracking()
     {
-        if (target == null)
-        {
-            //rigid.velocity = Vector3.up * Main.GetWeaponDefinition(type).velocity;
-            return;
-        }
-        else
-        {
-            //rigid.velocity = Vector3.zero;
-        }
-
+        rigid.velocity = Vector3.zero;
         //transform.position = Vector3.Lerp(transform.position, target.transform.position, .001f*Main.GetWeaponDefinition(type).velocity);
 
         // TODO Need to add turning
-        // encapsulate the bullet in empty to offset rotation
         // try swapping out lerp with move towards
+        float vel = Time.deltaTime * this.vel;
+        transform.position = Vector3.MoveTowards(transform.position, target.transform.position, vel);
 
+        // encapsulate the bullet in empty to offset rotation
+        transform.LookAt(target.transform);
 
         ////Failed stuff
-        Vector3 dir = target.transform.position - transform.position;
-        Vector3 vel = dir.normalized * Main.GetWeaponDefinition(type).velocity;
-        rigid.velocity = vel;
+        // Vector3 dir = target.transform.position - transform.position;
+        // Vector3 vel = dir.normalized * Main.GetWeaponDefinition(type).velocity;
+        // rigid.velocity = vel;
 
         //// https://answers.unity.com/questions/39031/how-can-i-rotate-a-rigid-body-based-on-its-velocit.html
         //transform.rotation = Quaternion.LookRotation(vel);
