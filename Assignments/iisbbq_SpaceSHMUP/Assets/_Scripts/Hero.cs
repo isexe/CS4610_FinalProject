@@ -17,6 +17,7 @@ public class Hero : MonoBehaviour
     public GameObject projectilePrefab;
     public float projectileSpeed = 40;
     public Weapon[] weapons;
+    public WeaponType startingWeapon;
 
     // [Header("Set Dynamically")]
     // public float shieldLevel = 1;
@@ -65,7 +66,7 @@ public class Hero : MonoBehaviour
         }
 
         ClearWeapons();
-        weapons[0].SetType(WeaponType.blaster);
+        weapons[0].SetType(startingWeapon);
     }
 
     void Update()

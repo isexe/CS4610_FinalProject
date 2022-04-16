@@ -678,7 +678,7 @@ MonoBehaviour:
     projectileColor: {r: 1, g: 0.78431374, b: 0, a: 1}
     damageOnHit: 10
     continousDamage: 0
-    delayBetweenShots: 1.5
+    delayBetweenShots: 1
     velocity: 30
     chargeTime: 0
   - type: 6
@@ -1605,6 +1605,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4158465648950424895, guid: 34c929b946a6752438e5afaecaf12b57, type: 3}
       propertyPath: _shieldLevel
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4158465648950424895, guid: 34c929b946a6752438e5afaecaf12b57, type: 3}
+      propertyPath: startingWeapon
       value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 4158465648950424895, guid: 34c929b946a6752438e5afaecaf12b57, type: 3}

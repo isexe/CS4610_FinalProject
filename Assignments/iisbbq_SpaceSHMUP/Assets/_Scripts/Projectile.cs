@@ -17,7 +17,7 @@ public class Projectile : MonoBehaviour
     private GameObject target;
     private float waveFrequency = 1f;
     private bool isHoming = false;
-    private float vel;
+    private Vector3 dir;
 
     // This public prop makes the field _type and takes ation when it is set
     public WeaponType type
@@ -40,7 +40,6 @@ public class Projectile : MonoBehaviour
         rigid = GetComponent<Rigidbody>();
 
         birthTime = Time.time;
-        vel = Main.GetWeaponDefinition(type).velocity;
     }
 
     void Update()
@@ -53,10 +52,11 @@ public class Projectile : MonoBehaviour
             if(target != null) Tracking();
             else{
                 if(isHoming){
-                    rigid.velocity = transform.rotation.eulerAngles.normalized * vel;
+                    rigid.velocity = Main.GetWeaponDefinition(type).velocity * dir.normalized;
                 } else{
-                    rigid.velocity = Vector3.forward * vel;
+                    rigid.velocity = Vector3.up * Main.GetWeaponDefinition(type).velocity;
                 }
+                
             }
             
         }
@@ -79,7 +79,7 @@ public class Projectile : MonoBehaviour
 
         Vector3 tempV = new Vector3(-sin, 1, 0);
         tempV.Normalize();
-        tempV *= vel;
+        tempV *= Main.GetWeaponDefinition(type).velocity;
         rigid.velocity = tempV;
 
         Invoke("InterpolateLeft", .1f);
@@ -94,7 +94,7 @@ public class Projectile : MonoBehaviour
 
         Vector3 tempV = new Vector3(sin, 1, 0);
         tempV.Normalize();
-        tempV *= vel;
+        tempV *= Main.GetWeaponDefinition(type).velocity;
         rigid.velocity = tempV;
 
         Invoke("InterpolateRight", .1f);
@@ -127,11 +127,13 @@ public class Projectile : MonoBehaviour
 
         // TODO Need to add turning
         // try swapping out lerp with move towards
-        float vel = Time.deltaTime * this.vel;
-        transform.position = Vector3.MoveTowards(transform.position, target.transform.position, vel);
-
+        float vel = Time.deltaTime * Main.GetWeaponDefinition(type).velocity;
+        
+        Vector3 newPos = Vector3.MoveTowards(transform.position, target.transform.position, vel);
+        dir = newPos - transform.position;
+        transform.position = newPos;
         // encapsulate the bullet in empty to offset rotation
-        transform.LookAt(target.transform);
+        transform.LookAt(target.transform, Vector3.forward);
 
         ////Failed stuff
         // Vector3 dir = target.transform.position - transform.position;
