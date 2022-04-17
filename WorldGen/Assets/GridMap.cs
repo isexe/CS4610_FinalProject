@@ -5,6 +5,17 @@ using UnityEngine;
 public class GridMap<T>
 {
     T[] cells;
+    public T this[int x, int y]
+    {
+        get
+        {
+            return this[new Vector2Int(x, y)];
+        }
+        set
+        {
+            this[new Vector2Int(x, y)] = value;
+        }
+    }
     public T this[Vector2Int pos]
     {
         get
@@ -23,7 +34,7 @@ public class GridMap<T>
     public Vector2Int Size
     {
         get { return size; }
-        set { size = value; }
+        private set { size = value; }
     }
 
     private Vector2Int offset;
@@ -46,7 +57,7 @@ public class GridMap<T>
         return pos.x + (Size.x * pos.y);
     }
 
-    public bool Inbounds(Vector2Int pos)
+    public bool InBounds(Vector2Int pos)
     {
         return new RectInt(Vector2Int.zero, Size).Contains(pos + Offset);
     }
