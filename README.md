@@ -1,1 +1,9 @@
-Contains my course work from Mizzou Spring 2022 for CMP_SC 4630 Game Dev.
+# Graphic Design - Final Project
+## Course
+    Mizzou
+    CMP_SC 4610
+    SECTION 01
+    Professor Ye Duan
+
+## Introduction
+(insert shit here)
