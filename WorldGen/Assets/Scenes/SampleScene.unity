@@ -330,7 +330,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapOrigin: {x: 0, y: 0}
   mapSize: {x: 30, y: 30}
-  roomMaxCount: 1
+  roomMaxCount: 100
   roomMaxSize: {x: 5, y: 5}
   roomMinSize: {x: 1, y: 1}
   demoPrefab: {fileID: 3435993806056007149, guid: 286724c3bac335d44b72f15f5aec4eaa, type: 3}

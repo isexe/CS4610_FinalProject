@@ -4,9 +4,10 @@ using UnityEngine;
 
 public class CollisionDetector : MonoBehaviour
 {
-    void OnTriggerEnter(Collider other){
-        if(other.transform.tag == "Room"){
-            Destroy(this.gameObject);
+    void OnCollisionEnter(Collision other){
+        if(gameObject.tag == "Room") return;
+        if(other.gameObject.tag == "Room"){
+            Destroy(gameObject);
         }
     }
 }

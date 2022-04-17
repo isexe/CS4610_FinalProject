@@ -135,15 +135,17 @@ public class MapGenerator : MonoBehaviour
                 // TODO create room
                 // TODO CreateRoom(Room room);
                 // currently used to debug
+                // This doesn't even work either :(
                 CreateRoomDemo(roomBuffer);
-                StartCoroutine(WaitInSec(.1f));
+                float timer = 0;
+                while(timer < 1) timer += Time.deltaTime;
 
                 // add room to rooms list
                 if(roomBuffer.roomGO != null)
                 {
-                    Destroy(roomBuffer.roomGO);
+                    Destroy(roomBuffer.roomGO.gameObject);
                     CreateRoomDemo(tRoom);
-                    tRoom.roomGO.GetComponent<Collider>().isTrigger = true;
+                    tRoom.roomGO.gameObject.tag = "Room";
                     rooms.Add(tRoom);
                     // add room to grid
                     foreach (var pos in tRoom.bounds.allPositionsWithin)
@@ -154,12 +156,6 @@ public class MapGenerator : MonoBehaviour
             }
         }
     }
-
-    IEnumerator WaitInSec(float seconds){
-        yield return new WaitForSeconds(seconds);
-    }
-
-
 
     void CreateRoomDemo(Room room)
     {
@@ -177,6 +173,9 @@ public class MapGenerator : MonoBehaviour
         GameObject anchor;
         anchor = GameObject.Find("anchorMap");
         if (anchor == null) anchor = new GameObject("anchorMap");
+        tGO.transform.SetParent(anchor.transform);
+
+        // Set room GameObject
         room.roomGO = tGO.gameObject;
     }
 
