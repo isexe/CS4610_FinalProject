@@ -84,8 +84,8 @@ public class MapGenerator : MonoBehaviour
     Grid2D<DataType> grid;
     List<Room> rooms;
 
-    // anchor for GO
-    GameObject anchor;
+    // anchors for hierarchy
+    GameObject roomAnchor;
 
     void Start()
     {
@@ -216,77 +216,87 @@ public class MapGenerator : MonoBehaviour
             }
         }
     }
-
-    // Doesn't work well, everything is scaled wrong and looks messy af
-    void CreateDungeon()
-    {
-        anchor = GameObject.Find("anchorDungeon");
-        if (anchor == null) anchor = new GameObject("anchorDungeon");
-
-        foreach (Room r in rooms)
-        {
-            CreateRoom(r);
-
-            //for(int x=r.bounds.xMin; x<=r.bounds.xMax; x++)
-            //{
-            //    CreateRoomBottomEdge(new Vector2Int(x, r.bounds.yMin));
-            //}
-            //for (int x = r.bounds.xMin; x <= r.bounds.xMax; x++)
-            //{
-            //    CreateRoomBottomEdge(new Vector2Int(x, r.bounds.yMin));
-            //}
-            //for (int x = r.bounds.xMin; x <= r.bounds.xMax; x++)
-            //{
-            //    CreateRoomBottomEdge(new Vector2Int(x, r.bounds.yMin));
-            //}
-
-            CreateRoomHorizontalEdges(r);
-            CreateRoomVerticalEdges(r);
-            CreateRoomCorners(r);
-        }
-    }
-
-    void CreatePrefab(Vector2Int position, GameObject gameObject)
+    void CreatePrefab(Vector2Int position, GameObject gameObject, GameObject anchor = null)
     {
         GameObject cell = Instantiate<GameObject>(gameObject);
         cell.transform.position = new Vector3(position.x * sizeOfUnit, 1, position.y * sizeOfUnit);
         cell.transform.localScale = new Vector3(1, 1, 1);
-        cell.transform.SetParent(anchor.transform, true);
+        if(anchor != null) cell.transform.SetParent(anchor.transform, true);
     }
 
-    void CreateRoom(Room r)
+    // Creates an empty dungeon room at each room object
+    void CreateDungeon()
+    {
+        
+        roomAnchor = GameObject.Find("anchorRooms");
+        if (roomAnchor == null)
+        {
+            roomAnchor = new GameObject("anchorDungeon");
+            roomAnchor.transform.SetParent(gameObject.transform);
+        }
+
+        int count = 0;
+        foreach (Room r in rooms)
+        {
+            count += 1;
+            CreateRoom(r, count);
+        }
+    }
+
+    void CreateRoom(Room r, int num)
+    {
+        // Creates anchor for room components
+        GameObject tempAnchor = roomAnchor;
+        roomAnchor = new GameObject("Room_" + num);
+
+        CreateRoomCenter(r);
+        CreateRoomHorizontalEdges(r);
+        CreateRoomVerticalEdges(r);
+        CreateRoomCorners(r);
+
+        // Sets room anchor to parent anchor
+        roomAnchor.transform.SetParent(tempAnchor.transform);
+        roomAnchor = tempAnchor;
+    }
+
+    void CreateRoomCenter(Room r)
     {
         for(int x = r.bounds.xMin + 1; x<r.bounds.xMax - 1; x++)
         {
             for(int y = r.bounds.yMin + 1; y<r.bounds.yMax - 1; y++)
             {
-                CreatePrefab(new Vector2Int(x, y), roomPrefab);
+                CreatePrefab(new Vector2Int(x, y), roomPrefab, roomAnchor);
             }
         }
-        
     }
 
     void CreateRoomHorizontalEdges(Room r)
     {
         for(int x=r.bounds.xMin + 1; x<r.bounds.xMax - 1; x++)
         {
-            CreatePrefab(new Vector2Int(x, r.bounds.yMin), roomEdgeBottomPrefab);
-            CreatePrefab(new Vector2Int(x, r.bounds.yMax-1), roomEdgeTopPrefab);
+            // Bottom edge of room
+            CreatePrefab(new Vector2Int(x, r.bounds.yMin), roomEdgeBottomPrefab, roomAnchor);
+            // Top edge of room
+            CreatePrefab(new Vector2Int(x, r.bounds.yMax-1), roomEdgeTopPrefab, roomAnchor);
         }
     }
     void CreateRoomVerticalEdges(Room r)
     {
         for (int y = r.bounds.yMin + 1; y < r.bounds.yMax - 1; y++)
         {
-            CreatePrefab(new Vector2Int(r.bounds.xMin, y), roomEdgeLeftPrefab);
-            CreatePrefab(new Vector2Int(r.bounds.xMax-1, y), roomEdgeRightPrefab);
+            // Left Edge of room
+            CreatePrefab(new Vector2Int(r.bounds.xMin, y), roomEdgeLeftPrefab, roomAnchor);
+            // Right Edge of room
+            CreatePrefab(new Vector2Int(r.bounds.xMax-1, y), roomEdgeRightPrefab, roomAnchor);
         }
     }
 
     void CreateRoomCorners(Room r)
     {
-        CreatePrefab(new Vector2Int(r.bounds.xMin, r.bounds.yMin), roomCornerBottomLeftPrefab);
-        
+        CreatePrefab(new Vector2Int(r.bounds.xMin, r.bounds.yMin), roomCornerBottomLeftPrefab, roomAnchor);
+        CreatePrefab(new Vector2Int(r.bounds.xMax-1, r.bounds.yMin), roomCornerBottomRightPrefab, roomAnchor);
+        CreatePrefab(new Vector2Int(r.bounds.xMin, r.bounds.yMax-1), roomCornerTopLeftPrefab, roomAnchor);
+        CreatePrefab(new Vector2Int(r.bounds.xMax-1, r.bounds.yMax-1), roomCornerTopRightPrefab, roomAnchor);
     }
 
     void GenerateHallways()
