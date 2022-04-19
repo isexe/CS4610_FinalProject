@@ -63,15 +63,15 @@ public class MapGenerator : MonoBehaviour
     public GameObject demoPrefab; // not really used
     public GameObject roomPrefab; // should be a single unit of room
 
-    public GameObject roomTopEdgePrefab; // lazy and need all 4 in inspector
-    public GameObject roomRightEdgePrefab; // May remove bottom three and just rotate top one
-    public GameObject roomLeftEdgePrefab;
-    public GameObject roomBottomEdgePrefab;
+    public GameObject roomEdgeTopPrefab; // lazy and need all 4 in inspector
+    public GameObject roomEdgeRightPrefab; // May remove bottom three and just rotate top one
+    public GameObject roomEdgeLeftPrefab;
+    public GameObject roomEdgeBottomPrefab;
 
-    public GameObject roomTopLeftCornerPrefab;  // same problem as room edges, lazy af and have 4 when need 1
-    public GameObject roomTopRightCornerPrefab;
-    public GameObject roomBottomRightCornerPrefab;
-    public GameObject roomBottomLeftCornerPrefab;
+    public GameObject roomCornerTopLeftPrefab;  // same problem as room edges, lazy af and have 4 when need 1
+    public GameObject roomCornerTopRightPrefab;
+    public GameObject roomCornerBottomRightPrefab;
+    public GameObject roomCornerBottomLeftPrefab;
 
     public GameObject hallPrefab; // should be a single unit of hall
 
@@ -246,7 +246,7 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
-    void CreateGameObject(Vector2Int position, GameObject gameObject)
+    void CreatePrefab(Vector2Int position, GameObject gameObject)
     {
         GameObject cell = Instantiate<GameObject>(gameObject);
         cell.transform.position = new Vector3(position.x * sizeOfUnit, 1, position.y * sizeOfUnit);
@@ -260,7 +260,7 @@ public class MapGenerator : MonoBehaviour
         {
             for(int y = r.bounds.yMin + 1; y<r.bounds.yMax - 1; y++)
             {
-                CreateGameObject(new Vector2Int(x, y), roomPrefab);
+                CreatePrefab(new Vector2Int(x, y), roomPrefab);
             }
         }
         
@@ -270,22 +270,23 @@ public class MapGenerator : MonoBehaviour
     {
         for(int x=r.bounds.xMin + 1; x<r.bounds.xMax - 1; x++)
         {
-            CreateGameObject(new Vector2Int(x, r.bounds.yMin), roomBottomEdgePrefab);
-            CreateGameObject(new Vector2Int(x, r.bounds.yMax-1), roomTopEdgePrefab);
+            CreatePrefab(new Vector2Int(x, r.bounds.yMin), roomEdgeBottomPrefab);
+            CreatePrefab(new Vector2Int(x, r.bounds.yMax-1), roomEdgeTopPrefab);
         }
     }
     void CreateRoomVerticalEdges(Room r)
     {
         for (int y = r.bounds.yMin + 1; y < r.bounds.yMax - 1; y++)
         {
-            CreateGameObject(new Vector2Int(r.bounds.xMin, y), roomLeftEdgePrefab);
-            CreateGameObject(new Vector2Int(r.bounds.xMax-1, y), roomRightEdgePrefab);
+            CreatePrefab(new Vector2Int(r.bounds.xMin, y), roomEdgeLeftPrefab);
+            CreatePrefab(new Vector2Int(r.bounds.xMax-1, y), roomEdgeRightPrefab);
         }
     }
 
     void CreateRoomCorners(Room r)
     {
-
+        CreatePrefab(new Vector2Int(r.bounds.xMin, r.bounds.yMin), roomCornerBottomLeftPrefab);
+        
     }
 
     void GenerateHallways()
