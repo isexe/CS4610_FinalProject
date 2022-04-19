@@ -47,18 +47,32 @@ public class MapGenerator : MonoBehaviour
     }
 
     // map settings
-    [Header("Map Settings")]
     [HideInInspector]  // currently map origin doesn't function properly so we don't fuck with it
     public Vector2Int mapOrigin = new Vector2Int(0,0);  // bottom left corner of map? idrk
+    
+    [Header("Map Settings")]
     public Vector2Int mapSize;
     public int roomGenAttempts; // pretty much just used during testing to stop inf loops
     public int maxNumOfRooms;   // helps reduce clutter
     public Vector2Int roomMaxSize;
     public Vector2Int roomMinSize;
+    public float sizeOfUnit = 1;
 
     // prefabs
+    [Header("Prefabs")]
     public GameObject demoPrefab; // not really used
     public GameObject roomPrefab; // should be a single unit of room
+
+    public GameObject roomTopEdgePrefab; // lazy and need all 4 in inspector
+    public GameObject roomRightEdgePrefab; // May remove bottom three and just rotate top one
+    public GameObject roomLeftEdgePrefab;
+    public GameObject roomBottomEdgePrefab;
+
+    public GameObject roomTopLeftCornerPrefab;  // same problem as room edges, lazy af and have 4 when need 1
+    public GameObject roomTopRightCornerPrefab;
+    public GameObject roomBottomRightCornerPrefab;
+    public GameObject roomBottomLeftCornerPrefab;
+
     public GameObject hallPrefab; // should be a single unit of hall
 
     // used for seeded random gen
@@ -70,6 +84,9 @@ public class MapGenerator : MonoBehaviour
     Grid2D<DataType> grid;
     List<Room> rooms;
 
+    // anchor for GO
+    GameObject anchor;
+
     void Start()
     {
         // Create line boundary for debugging
@@ -77,10 +94,10 @@ public class MapGenerator : MonoBehaviour
         if(bounds != null)
         {
             bounds.positionCount = 4;
-            bounds.SetPosition(0, new Vector3(mapOrigin.x, 0, mapOrigin.y) + transform.position);
-            bounds.SetPosition(1, new Vector3(mapOrigin.x + mapSize.x, 0, mapOrigin.y) + transform.position);
-            bounds.SetPosition(2, new Vector3(mapOrigin.x + mapSize.x, 0, mapOrigin.y + mapSize.y) + transform.position);
-            bounds.SetPosition(3, new Vector3(mapOrigin.x, 0, mapOrigin.y + mapSize.y) + transform.position);
+            bounds.SetPosition(0, new Vector3(mapOrigin.x * sizeOfUnit, 0, mapOrigin.y * sizeOfUnit) + transform.position * sizeOfUnit);
+            bounds.SetPosition(1, new Vector3((mapOrigin.x + mapSize.x) * sizeOfUnit, 0, mapOrigin.y * sizeOfUnit) + transform.position * sizeOfUnit);
+            bounds.SetPosition(2, new Vector3((mapOrigin.x + mapSize.x) * sizeOfUnit, 0, (mapOrigin.y + mapSize.y) * sizeOfUnit) + transform.position * sizeOfUnit);
+            bounds.SetPosition(3, new Vector3(mapOrigin.x * sizeOfUnit, 0, (mapOrigin.y + mapSize.y) * sizeOfUnit) + transform.position * sizeOfUnit);
         }
 
         // Begin hell
@@ -91,6 +108,7 @@ public class MapGenerator : MonoBehaviour
         
         // Draw Demo Grid for debugging
         CreateGridDemo();
+        CreateDungeon();
     }
 
     void GenerateMap()
@@ -200,19 +218,74 @@ public class MapGenerator : MonoBehaviour
     }
 
     // Doesn't work well, everything is scaled wrong and looks messy af
-    void CreateRoomDemo(Vector2Int position, Vector2Int size, Color color, float height = 0)
+    void CreateDungeon()
     {
-        // create and set room
-        GameObject tGO = Instantiate<GameObject>(demoPrefab);
-        tGO.transform.position = new Vector3(position.x, height, position.y);
-        tGO.transform.localScale = new Vector3(size.x, 1, size.y);
-        tGO.GetComponent<Renderer>().material.color = color;
+        anchor = GameObject.Find("anchorDungeon");
+        if (anchor == null) anchor = new GameObject("anchorDungeon");
 
-        //Create anchor to house rooms
-        GameObject anchor;
-        anchor = GameObject.Find("anchorMap");
-        if (anchor == null) anchor = new GameObject("anchorMap");
-        tGO.transform.SetParent(anchor.transform, true);
+        foreach (Room r in rooms)
+        {
+            CreateRoom(r);
+
+            //for(int x=r.bounds.xMin; x<=r.bounds.xMax; x++)
+            //{
+            //    CreateRoomBottomEdge(new Vector2Int(x, r.bounds.yMin));
+            //}
+            //for (int x = r.bounds.xMin; x <= r.bounds.xMax; x++)
+            //{
+            //    CreateRoomBottomEdge(new Vector2Int(x, r.bounds.yMin));
+            //}
+            //for (int x = r.bounds.xMin; x <= r.bounds.xMax; x++)
+            //{
+            //    CreateRoomBottomEdge(new Vector2Int(x, r.bounds.yMin));
+            //}
+
+            CreateRoomHorizontalEdges(r);
+            CreateRoomVerticalEdges(r);
+            CreateRoomCorners(r);
+        }
+    }
+
+    void CreateGameObject(Vector2Int position, GameObject gameObject)
+    {
+        GameObject cell = Instantiate<GameObject>(gameObject);
+        cell.transform.position = new Vector3(position.x * sizeOfUnit, 1, position.y * sizeOfUnit);
+        cell.transform.localScale = new Vector3(1, 1, 1);
+        cell.transform.SetParent(anchor.transform, true);
+    }
+
+    void CreateRoom(Room r)
+    {
+        for(int x = r.bounds.xMin + 1; x<r.bounds.xMax - 1; x++)
+        {
+            for(int y = r.bounds.yMin + 1; y<r.bounds.yMax - 1; y++)
+            {
+                CreateGameObject(new Vector2Int(x, y), roomPrefab);
+            }
+        }
+        
+    }
+
+    void CreateRoomHorizontalEdges(Room r)
+    {
+        for(int x=r.bounds.xMin + 1; x<r.bounds.xMax - 1; x++)
+        {
+            CreateGameObject(new Vector2Int(x, r.bounds.yMin), roomBottomEdgePrefab);
+            CreateGameObject(new Vector2Int(x, r.bounds.yMax-1), roomTopEdgePrefab);
+        }
+    }
+    void CreateRoomVerticalEdges(Room r)
+    {
+        for (int y = r.bounds.yMin + 1; y < r.bounds.yMax - 1; y++)
+        {
+            CreateGameObject(new Vector2Int(r.bounds.xMin, y), roomLeftEdgePrefab);
+            CreateGameObject(new Vector2Int(r.bounds.xMax-1, y), roomRightEdgePrefab);
+        }
+    }
+
+    void CreateRoomCorners(Room r)
+    {
+
     }
 
     void GenerateHallways()
@@ -241,8 +314,8 @@ public class MapGenerator : MonoBehaviour
         GameObject anchor;
         anchor = GameObject.Find("anchorGrid");
         if (anchor == null) anchor = new GameObject("anchorGrid");
-        
-        for(int x=0; x<grid.Size.x; x++)
+
+        for (int x=0; x<grid.Size.x; x++)
         {
             for(int y=0; y<grid.Size.y; y++)
             {
@@ -250,8 +323,10 @@ public class MapGenerator : MonoBehaviour
                 switch (type)
                 {
                     case DataType.Room:
-                        GameObject cell = Instantiate<GameObject>(demoPrefab);
-                        cell.transform.position = new Vector3(x, 1, y);
+                        GameObject cell = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        cell.transform.position = new Vector3(x * sizeOfUnit, -1, y * sizeOfUnit);
+
+                        cell.transform.localScale = new Vector3(1 * sizeOfUnit, 1, 1 * sizeOfUnit);
                         cell.transform.SetParent(anchor.transform, true);
                         break;
                     // TODO add extra stuff for hallways later
