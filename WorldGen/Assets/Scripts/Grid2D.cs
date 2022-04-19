@@ -6,19 +6,8 @@ public class Grid2D<T>
 {
     T[] data;
 
-    private Vector2Int origin;
-    public Vector2Int Origin
-    {
-        get { return this.origin; }
-        private set { this.origin = value; }
-    }
-
-    private Vector2Int size;
-    public Vector2Int Size
-    {
-        get { return this.size; }
-        private set { this.size = value; }
-    }
+    public Vector2Int Origin { get; private set; }
+    public Vector2Int Size { get; set; }
 
     public Grid2D(Vector2Int size, Vector2Int origin)
     {
@@ -31,6 +20,11 @@ public class Grid2D<T>
     public int GetIndex(Vector2Int pos)
     {
         return pos.x + (pos.y * Size.x);
+    }
+
+    public bool InBounds(Vector2Int pos)
+    {
+        return new RectInt(Vector2Int.zero, Size).Contains(pos + Origin);
     }
 
     public T this[int x, int y]

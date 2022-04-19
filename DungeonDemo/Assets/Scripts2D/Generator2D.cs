@@ -31,6 +31,8 @@ public class Generator2D : MonoBehaviour {
     [SerializeField]
     Vector2Int roomMaxSize;
     [SerializeField]
+    Vector2Int roomMinSize;
+    [SerializeField]
     GameObject cubePrefab;
     [SerializeField]
     Material redMaterial;
@@ -48,7 +50,7 @@ public class Generator2D : MonoBehaviour {
     }
 
     void Generate() {
-        random = new Random();
+        random = new Random(0);
         grid = new Grid2D<CellType>(size, Vector2Int.zero);
         rooms = new List<Room>();
 
@@ -66,8 +68,8 @@ public class Generator2D : MonoBehaviour {
             );
 
             Vector2Int roomSize = new Vector2Int(
-                random.Next(1, roomMaxSize.x + 1),
-                random.Next(1, roomMaxSize.y + 1)
+                random.Next(roomMinSize.x, roomMaxSize.x + 1),
+                random.Next(roomMinSize.y, roomMaxSize.y + 1)
             );
 
             bool add = true;
