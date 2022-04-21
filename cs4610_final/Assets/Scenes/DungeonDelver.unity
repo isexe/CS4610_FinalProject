@@ -440,14 +440,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mapOrigin: {x: 0, y: 0}
-  mapSize: {x: 50, y: 50}
+  mapSize: {x: 20, y: 20}
   roomGenAttempts: 75
   maxNumOfRooms: 8
   roomMaxSize: {x: 6, y: 6}
   roomMinSize: {x: 3, y: 3}
-  sizeOfUnit: 4
+  roomScale: 4
   demoPrefab: {fileID: 0}
   roomPrefab: {fileID: 255709439784976422, guid: edabc82bf938b7f42b672419e0598948, type: 3}
+  chandelierPrefab: {fileID: 1821300323071963912, guid: 2b5f6b76f1ed47f4f8bc90c9aff3184b, type: 3}
   roomEdgeTopPrefab: {fileID: 2874310820666637881, guid: 2c7d9c91448768d46ad5e49bae4253c9, type: 3}
   roomEdgeRightPrefab: {fileID: 6480565946164595706, guid: 9182356fcd9e91d488157aed42d6c57b, type: 3}
   roomEdgeLeftPrefab: {fileID: 8711950409860145303, guid: 79bd543cee48d9d4c89ca7009099ddd5, type: 3}

@@ -56,12 +56,14 @@ public class MapGenerator : MonoBehaviour
     public int maxNumOfRooms;   // helps reduce clutter
     public Vector2Int roomMaxSize;
     public Vector2Int roomMinSize;
-    public float sizeOfUnit = 1;
+    public float roomScale = 1;
 
     // prefabs
     [Header("Prefabs")]
     public GameObject demoPrefab; // not really used
     public GameObject roomPrefab; // should be a single unit of room
+
+    public GameObject chandelierPrefab; // used to light center of room
 
     public GameObject roomEdgeTopPrefab; // lazy and need all 4 in inspector
     public GameObject roomEdgeRightPrefab; // May remove bottom three and just rotate top one
@@ -83,6 +85,7 @@ public class MapGenerator : MonoBehaviour
     // data for gen
     Grid2D<DataType> grid;
     List<Room> rooms;
+    Graph graph;
 
     // anchors for hierarchy
     GameObject roomAnchor;
@@ -94,10 +97,10 @@ public class MapGenerator : MonoBehaviour
         if(bounds != null)
         {
             bounds.positionCount = 4;
-            bounds.SetPosition(0, new Vector3(mapOrigin.x * sizeOfUnit, 0, mapOrigin.y * sizeOfUnit) + transform.position * sizeOfUnit);
-            bounds.SetPosition(1, new Vector3((mapOrigin.x + mapSize.x) * sizeOfUnit, 0, mapOrigin.y * sizeOfUnit) + transform.position * sizeOfUnit);
-            bounds.SetPosition(2, new Vector3((mapOrigin.x + mapSize.x) * sizeOfUnit, 0, (mapOrigin.y + mapSize.y) * sizeOfUnit) + transform.position * sizeOfUnit);
-            bounds.SetPosition(3, new Vector3(mapOrigin.x * sizeOfUnit, 0, (mapOrigin.y + mapSize.y) * sizeOfUnit) + transform.position * sizeOfUnit);
+            bounds.SetPosition(0, new Vector3(mapOrigin.x * roomScale, 0, mapOrigin.y * roomScale) + transform.position * roomScale);
+            bounds.SetPosition(1, new Vector3((mapOrigin.x + mapSize.x) * roomScale, 0, mapOrigin.y * roomScale) + transform.position * roomScale);
+            bounds.SetPosition(2, new Vector3((mapOrigin.x + mapSize.x) * roomScale, 0, (mapOrigin.y + mapSize.y) * roomScale) + transform.position * roomScale);
+            bounds.SetPosition(3, new Vector3(mapOrigin.x * roomScale, 0, (mapOrigin.y + mapSize.y) * roomScale) + transform.position * roomScale);
         }
 
         // Begin hell
@@ -109,6 +112,28 @@ public class MapGenerator : MonoBehaviour
         // Draw Demo Grid for debugging
         CreateGridDemo();
         CreateDungeon();
+        CreateGraphDemo();
+        
+        // *Used to debug the triangle calculations, they currently work
+        //Triangle triangle = new Triangle(new Vector2(4, 5), new Vector2(6, 8), new Vector2(5, -2));
+        //Vector2 center = triangle.CalculateCircumcenter();
+        //float radius = triangle.CalculateCircumradius(center);
+
+        //Debug.Log(center);
+        //Debug.Log(radius);
+
+        //Debug.DrawLine(new Vector3(4, 0, 5), new Vector3(6, 0, 8), Color.magenta, Mathf.Infinity, false);
+        //Debug.DrawLine(new Vector3(6, 0, 8), new Vector3(5, 0, -2), Color.magenta, Mathf.Infinity, false);
+        //Debug.DrawLine(new Vector3(5, 0, -2), new Vector3(4, 0, 5), Color.magenta, Mathf.Infinity, false);
+        
+        //Debug.DrawLine(new Vector3(4, 0, 5), new Vector3(center.x, 0, center.y), Color.red, Mathf.Infinity, false);
+        //Debug.DrawLine(new Vector3(6, 0, 8), new Vector3(center.x, 0, center.y), Color.red, Mathf.Infinity, false);
+        //Debug.DrawLine(new Vector3(5, 0, -2), new Vector3(center.x, 0, center.y), Color.red, Mathf.Infinity, false);
+
+        //Debug.DrawLine(new Vector3(center.x-radius, 0, center.y), new Vector3(center.x, 0, center.y), Color.cyan, Mathf.Infinity, false);
+        //Debug.DrawLine(new Vector3(center.x + radius, 0, center.y), new Vector3(center.x, 0, center.y), Color.cyan, Mathf.Infinity, false);
+        //Debug.DrawLine(new Vector3(center.x, 0, center.y-radius), new Vector3(center.x, 0, center.y), Color.cyan, Mathf.Infinity, false);
+        //Debug.DrawLine(new Vector3(center.x, 0, center.y + radius), new Vector3(center.x, 0, center.y), Color.cyan, Mathf.Infinity, false);
     }
 
     void GenerateMap()
@@ -124,21 +149,21 @@ public class MapGenerator : MonoBehaviour
         Debug.Log("...Generating Rooms...");
         GenerateRooms();
 
-        // TODO
-        Debug.Log("...Generating Hallways...");
-        GenerateHallways();
+        //// TODO
+        //Debug.Log("...Generating Hallways...");
+        //GenerateHallways();
 
-        // TODO
-        Debug.Log("...Generating a Boss Room...");
-        GenerateBossRoom();
+        //// TODO
+        //Debug.Log("...Generating a Boss Room...");
+        //GenerateBossRoom();
 
-        // TODO
-        Debug.Log("...Generating a Reward Room...");
-        GenerateRewardRoom();
+        //// TODO
+        //Debug.Log("...Generating a Reward Room...");
+        //GenerateRewardRoom();
 
-        // TODO
-        Debug.Log("...Populating Empty Rooms with Enemies...");
-        GenerateEnemyRoom();
+        //// TODO
+        //Debug.Log("...Populating Empty Rooms with Enemies...");
+        //GenerateEnemyRoom();
     }
 
     void GenerateRooms()
@@ -219,7 +244,7 @@ public class MapGenerator : MonoBehaviour
     void CreatePrefab(Vector2Int position, GameObject gameObject, GameObject anchor = null)
     {
         GameObject cell = Instantiate<GameObject>(gameObject);
-        cell.transform.position = new Vector3(position.x * sizeOfUnit, 1, position.y * sizeOfUnit);
+        cell.transform.position = new Vector3(position.x * roomScale, 0, position.y * roomScale);
         cell.transform.localScale = new Vector3(1, 1, 1);
         if(anchor != null) cell.transform.SetParent(anchor.transform, true);
     }
@@ -249,54 +274,61 @@ public class MapGenerator : MonoBehaviour
         GameObject tempAnchor = roomAnchor;
         roomAnchor = new GameObject("Room_" + num);
 
-        CreateRoomCenter(r);
-        CreateRoomHorizontalEdges(r);
-        CreateRoomVerticalEdges(r);
-        CreateRoomCorners(r);
+        CreateRoomCenter(r, roomAnchor);
+        CreateRoomHorizontalEdges(r, roomAnchor);
+        CreateRoomVerticalEdges(r, roomAnchor);
+        CreateRoomCorners(r, roomAnchor);
+
+
+        // TODO maybe generate chandelier at the center of room?
+        // !Hard coded height of chandelier, if issues with placement check that
+        //Debug.Log(r.bounds.center);
+        GameObject chandelier = Instantiate<GameObject>(chandelierPrefab, new Vector3((r.bounds.center.x - .5f) * roomScale, 4.35f, (r.bounds.center.y - .5f) * roomScale), Quaternion.identity);
+        chandelier.transform.SetParent(roomAnchor.transform);
 
         // Sets room anchor to parent anchor
         roomAnchor.transform.SetParent(tempAnchor.transform);
         roomAnchor = tempAnchor;
     }
 
-    void CreateRoomCenter(Room r)
+    void CreateRoomCenter(Room r, GameObject anchor = null)
     {
         for(int x = r.bounds.xMin + 1; x<r.bounds.xMax - 1; x++)
         {
             for(int y = r.bounds.yMin + 1; y<r.bounds.yMax - 1; y++)
             {
-                CreatePrefab(new Vector2Int(x, y), roomPrefab, roomAnchor);
+                CreatePrefab(new Vector2Int(x, y), roomPrefab, anchor);
             }
         }
     }
 
-    void CreateRoomHorizontalEdges(Room r)
+    void CreateRoomHorizontalEdges(Room r, GameObject anchor = null)
     {
         for(int x=r.bounds.xMin + 1; x<r.bounds.xMax - 1; x++)
         {
             // Bottom edge of room
-            CreatePrefab(new Vector2Int(x, r.bounds.yMin), roomEdgeBottomPrefab, roomAnchor);
+            CreatePrefab(new Vector2Int(x, r.bounds.yMin), roomEdgeBottomPrefab, anchor);
             // Top edge of room
-            CreatePrefab(new Vector2Int(x, r.bounds.yMax-1), roomEdgeTopPrefab, roomAnchor);
+            CreatePrefab(new Vector2Int(x, r.bounds.yMax-1), roomEdgeTopPrefab, anchor);
         }
     }
-    void CreateRoomVerticalEdges(Room r)
+    void CreateRoomVerticalEdges(Room r, GameObject anchor = null)
     {
         for (int y = r.bounds.yMin + 1; y < r.bounds.yMax - 1; y++)
         {
             // Left Edge of room
-            CreatePrefab(new Vector2Int(r.bounds.xMin, y), roomEdgeLeftPrefab, roomAnchor);
+            CreatePrefab(new Vector2Int(r.bounds.xMin, y), roomEdgeLeftPrefab, anchor);
             // Right Edge of room
-            CreatePrefab(new Vector2Int(r.bounds.xMax-1, y), roomEdgeRightPrefab, roomAnchor);
+            CreatePrefab(new Vector2Int(r.bounds.xMax-1, y), roomEdgeRightPrefab, anchor);
         }
     }
 
-    void CreateRoomCorners(Room r)
+    void CreateRoomCorners(Room r, GameObject anchor = null)
     {
-        CreatePrefab(new Vector2Int(r.bounds.xMin, r.bounds.yMin), roomCornerBottomLeftPrefab, roomAnchor);
-        CreatePrefab(new Vector2Int(r.bounds.xMax-1, r.bounds.yMin), roomCornerBottomRightPrefab, roomAnchor);
-        CreatePrefab(new Vector2Int(r.bounds.xMin, r.bounds.yMax-1), roomCornerTopLeftPrefab, roomAnchor);
-        CreatePrefab(new Vector2Int(r.bounds.xMax-1, r.bounds.yMax-1), roomCornerTopRightPrefab, roomAnchor);
+        CreatePrefab(new Vector2Int(r.bounds.xMin, r.bounds.yMin), roomCornerBottomLeftPrefab, anchor);
+        CreatePrefab(new Vector2Int(r.bounds.xMax-1, r.bounds.yMin), roomCornerBottomRightPrefab, anchor);
+        CreatePrefab(new Vector2Int(r.bounds.xMin, r.bounds.yMax-1), roomCornerTopLeftPrefab, anchor);
+        CreatePrefab(new Vector2Int(r.bounds.xMax-1, r.bounds.yMax-1), roomCornerTopRightPrefab, anchor);
     }
 
     void GenerateHallways()
@@ -335,14 +367,44 @@ public class MapGenerator : MonoBehaviour
                 {
                     case DataType.Room:
                         GameObject cell = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        cell.transform.position = new Vector3(x * sizeOfUnit, -1, y * sizeOfUnit);
+                        cell.transform.position = new Vector3(x * roomScale, -1, y * roomScale);
 
-                        cell.transform.localScale = new Vector3(1 * sizeOfUnit, 1, 1 * sizeOfUnit);
+                        cell.transform.localScale = new Vector3(1 * roomScale, 1, 1 * roomScale);
                         cell.transform.SetParent(anchor.transform, true);
                         break;
                     // TODO add extra stuff for hallways later
                 }
             }
+        }
+
+        anchor.transform.SetParent(transform);
+    }
+
+    void CreateGraphDemo()
+    {
+        graph = new Graph();
+
+        foreach (Room r in rooms)
+        {
+            Vector2 point = r.bounds.center - new Vector2(.5f, .5f);
+            graph.AddPoint(point);
+        }
+
+        //graph.GenerateDemoEdges();
+
+        graph.DelanuayTriangluation();
+
+        DrawGraph();
+    }
+
+    public void DrawGraph()
+    {
+        foreach (Edge e in graph.Edges)
+        {
+            Vector3 pt1 = new Vector3(e.P1.X * roomScale, 0, e.P1.Y * roomScale);
+            Vector3 pt2 = new Vector3(e.P2.X * roomScale, 0, e.P2.Y * roomScale);
+
+            Debug.DrawLine(pt1, pt2, Color.cyan, Mathf.Infinity, false);
         }
     }
 }
