@@ -42,10 +42,35 @@ public class Point
         return DistanceToPoint(new Point(position));
     }
 
+    public override bool Equals(object obj)
+    {
+        if(obj is Point p)
+        {
+            return this == p;
+        }
+
+        return false;
+    }
+
     public bool Equals(Point other)
     {
         if (this.X.Equals(other.X) && this.Y.Equals(other.Y)) return true;
         return false;
+    }
+
+    public static bool operator ==(Point left, Point right)
+    {
+        return left.X == right.X && left.Y == right.Y;
+    }
+
+    public static bool operator !=(Point left, Point right)
+    {
+        return !(left == right);
+    }
+
+    public override int GetHashCode()
+    {
+        return X.GetHashCode() ^ Y.GetHashCode();
     }
 }
 
@@ -80,91 +105,37 @@ public class Edge
         return value;
     }
 
-    public bool Equals(Edge other)
+    public static bool operator ==(Edge left, Edge right)
     {
-        if (this.P1.Equals(other.P1) && this.P2.Equals(other.P2)) return true;
-        return false;
-    }
-}
-
-public class Triangle
-{
-    public List<Vector2> Vertices { get; set; }
-    public List<Edge> Edges { get; }
-
-    // Used for calculations
-    private Vector2 A;
-    private Vector2 B;
-    private Vector2 C;
-
-    public Triangle(Vector2 v1, Vector2 v2, Vector2 v3)
-    {
-        Vertices = new List<Vector2>(3);
-        Edges = new List<Edge>(3);
-
-        Vertices.Add(v1);
-        Vertices.Add(v2);
-        Vertices.Add(v3);
-
-        Edges.Add(new Edge(v1, v2));
-        Edges.Add(new Edge(v2, v3));
-        Edges.Add(new Edge(v3, v1));
-
-        A = v1;
-        B = v2;
-        C = v3;
+        return (left.P1 == right.P1 || left.P1 == right.P2)
+            && (left.P2 == right.P1 || left.P2 == right.P2);
     }
 
-    public bool ContainsEdge(Edge e)
+    public static bool operator !=(Edge left, Edge right)
     {
-        foreach(Edge edge in Edges)
+        return !(left == right);
+    }
+
+    public override bool Equals(object obj)
+    {
+        if(obj is Edge e)
         {
-            if (edge.Equals(e)) return true;
+            return this == e;
         }
+
         return false;
     }
 
-    // Detects if p is contained within the circumcircle of this triangle
-    public bool isPointInsideCircumcircle(Point p)
+    public bool Equals(Edge e)
     {
-        // Calculate Circumcenter *WORKS
-        Vector2 center = CalculateCircumcenter();
-
-        // Calculate circumradius
-        // Ignore complex equation, just gonna find dist from center to vertex
-        float radius = CalculateCircumradius(center);
-
-        // Check if p distance is < than radius from center
-        float dist = p.DistanceToPosition(center);
-
-        if (dist < radius) return true;
-        return false;
+        return this == e;
     }
 
-    // Equation from:
-    //  https://en.wikipedia.org/wiki/Circumscribed_circle#Circumcircle_equations
-    public Vector2 CalculateCircumcenter()
+    public override int GetHashCode()
     {
-        float D = 2 * (A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y));
-
-        Vector2 U = new Vector2();
-        U.x = (1 / D) * ((Mathf.Pow(A.x, 2) + Mathf.Pow(A.y, 2)) * (B.y - C.y) + (Mathf.Pow(B.x, 2) + Mathf.Pow(B.y, 2)) * (C.y - A.y) + (Mathf.Pow(C.x, 2) + Mathf.Pow(C.y, 2)) * (A.y - B.y));
-        U.y = (1 / D) * ((Mathf.Pow(A.x, 2) + Mathf.Pow(A.y, 2)) * (C.x - B.x) + (Mathf.Pow(B.x, 2) + Mathf.Pow(B.y, 2)) * (A.x - C.x) + (Mathf.Pow(C.x, 2) + Mathf.Pow(C.y, 2)) * (B.x - A.x));
-
-        return U;
+        return P1.GetHashCode() ^ P2.GetHashCode();
     }
 
-    // Currently just using distance function
-    // May try linked equation to see if better
-    //  https://www.mathopenref.com/trianglecircumcircle.html
-    public float CalculateCircumradius(Vector2 circumcenter) {
-        float radius;
-
-        radius = Mathf.Sqrt(Mathf.Pow((circumcenter.x - A.x), 2) + Mathf.Pow((circumcenter.y - A.y), 2));
-
-        return radius;
-
-    }
 }
 
 public class Graph
@@ -185,102 +156,11 @@ public class Graph
         {
             foreach (Point p2 in Points)
             {
-                Edge e = new Edge(p1, p2);
-                Edges.Add(e);
-            }
-        }
-    }
-
-    // TODO Fix this shit
-    // Adapted from pseudo-code here:
-    //  https://en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm
-    public void DelanuayTriangluation()
-    {
-        // List of triangles
-        List<Triangle> triangulation = new List<Triangle>();
-
-        // add super-triangle
-        Triangle super = new Triangle(new Vector2(-1000, -1000), new Vector2(0, 1000), new Vector2(1000, -1000));
-        triangulation.Add(super);
-
-        foreach(Point point in Points)
-        {
-            // empty badtriangles set
-            List<Triangle> badTriangles = new List<Triangle>();
-
-            // foreach triangle in trianglesList
-            foreach(Triangle triangle in triangulation)
-            {
-                // check if point is inside of circumcircle of triangle
-                if (triangle.isPointInsideCircumcircle(point))
+                if(p1 != p2)
                 {
-                    Debug.Log("Found point inside circumcircle");
-                    // if it is, add triangle to badTriangles
-                    badTriangles.Add(triangle);
+                    Edge e = new Edge(p1, p2);
+                    if(!Edges.Contains(e)) Edges.Add(e);
                 }
-            }
-            // Create list of edges to represent polygon
-            List<Edge> polygon = new List<Edge>();
-
-
-            // !ERROR is happening here
-            // foreach triangle edge in badTriangles
-            foreach(Triangle triangle in badTriangles)
-            {
-                foreach(Edge edge in triangle.Edges)
-                {
-                    bool notShared = true;
-                    // if edge not shared by other triangle in badtriangle add edge to polygon
-                    foreach(Triangle badTriangle in badTriangles)
-                    {
-                        Debug.Log("looking for shared edges");
-                        if (badTriangle.ContainsEdge(edge)) notShared = false;
-                    }
-                    if (notShared)
-                    {
-                        Debug.Log("found edge that isn't shared");
-                        polygon.Add(edge);
-                    }
-                }
-            }            
-            
-            // foreach triangle in badTriangle
-            foreach(Triangle triangle in badTriangles)
-            {
-                //remove triangle from triangleList
-                triangulation.Remove(triangle);
-            }
-                
-            // foreach edge in polygon
-            foreach(Edge edge in polygon)
-            {
-                Debug.Log("Adding edge from polygon to triangulation");
-                //newTriangle = triangle from edge to point
-                Triangle newTriangle = new Triangle(edge.P1.Pos, edge.P2.Pos, point.Pos);
-
-                //add newTriangle to triangulation
-                triangulation.Add(newTriangle);
-            }
-        }
-        // foreach triangle in triangulation
-        foreach(Triangle triangle in triangulation)
-        {
-            //if appart of super triangle remove
-            if (triangle.Equals(super))
-            {
-                triangulation.Remove(triangle);
-                break;
-            }
-        }
-        // return triangulation...or...
-        // foreach triangle in triangulation
-        foreach(Triangle triangle in triangulation)
-        {
-            //foreach edge in triangle add edge to graph
-            foreach(Edge edge in triangle.Edges)
-            {
-                Debug.Log("There were edges");
-                Edges.Add(edge);
             }
         }
     }
@@ -293,5 +173,10 @@ public class Graph
     public void AddPoint(Vector2Int point)
     {
         AddPoint(new Vector2(point.x, point.y));
+    }
+
+    public void AddPoint(Point p)
+    {
+        Points.Add(p);
     }
 }

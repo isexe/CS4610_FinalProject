@@ -440,6 +440,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mapOrigin: {x: 0, y: 0}
+  seed: 0
   mapSize: {x: 20, y: 20}
   roomGenAttempts: 75
   maxNumOfRooms: 8

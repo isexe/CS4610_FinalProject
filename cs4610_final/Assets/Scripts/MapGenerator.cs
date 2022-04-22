@@ -49,8 +49,9 @@ public class MapGenerator : MonoBehaviour
     // map settings
     [HideInInspector]  // currently map origin doesn't function properly so we don't fuck with it
     public Vector2Int mapOrigin = new Vector2Int(0,0);  // bottom left corner of map? idrk
-    
+
     [Header("Map Settings")]
+    public int seed;
     public Vector2Int mapSize;
     public int roomGenAttempts; // pretty much just used during testing to stop inf loops
     public int maxNumOfRooms;   // helps reduce clutter
@@ -80,7 +81,6 @@ public class MapGenerator : MonoBehaviour
     // used for seeded random gen
     // may try to implement seeded runs like Binding of Isaac
     Random random;
-    int seed;
 
     // data for gen
     Grid2D<DataType> grid;
@@ -138,7 +138,7 @@ public class MapGenerator : MonoBehaviour
 
     void GenerateMap()
     {
-        seed = new Random().Next();
+        if(seed == 0) seed = new Random().Next();
         Debug.Log("Seed: " + seed);
         random = new Random(seed);
         grid = new Grid2D<DataType>(mapSize, mapOrigin);
@@ -390,21 +390,30 @@ public class MapGenerator : MonoBehaviour
             graph.AddPoint(point);
         }
 
-        //graph.GenerateDemoEdges();
+        graph.GenerateDemoEdges();
 
-        graph.DelanuayTriangluation();
+        graph = KruskalMST.MST(graph);
+
+        //Triangulation.DelanuayTriangluation(graph);
 
         DrawGraph();
     }
 
     public void DrawGraph()
     {
+        int count = 0;
         foreach (Edge e in graph.Edges)
         {
+            count += 1;
             Vector3 pt1 = new Vector3(e.P1.X * roomScale, 0, e.P1.Y * roomScale);
             Vector3 pt2 = new Vector3(e.P2.X * roomScale, 0, e.P2.Y * roomScale);
 
             Debug.DrawLine(pt1, pt2, Color.cyan, Mathf.Infinity, false);
+            if(count > 100)
+            {
+                Debug.Log("EXIT DrawGraph(): Code 1");
+                break;
+            }
         }
     }
 }
