@@ -1,4 +1,27 @@
-﻿using System.Collections;
+﻿/* Adapted from https://github.com/vazgriz/DungeonGenerator
+
+Copyright (c) 2019 Ryan Vazquez
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal 
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.*/
+
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = System.Random;
@@ -24,14 +47,39 @@ public class Generator2D : MonoBehaviour {
         }
     }
 
+    [Header("Generation Settings")]
+    public int seed;
     [SerializeField]
     Vector2Int size;
     [SerializeField]
     int roomCount;
+    // max numb of rooms the algo will make
+    public int maxNumRooms;
     [SerializeField]
     Vector2Int roomMaxSize;
     [SerializeField]
     Vector2Int roomMinSize;
+    
+    [Header("Room Settings")]
+    // room prefab stuff
+    public float roomScale = 1;
+    public GameObject roomPrefab; // should be a single unit of room
+
+    public GameObject chandelierPrefab; // used to light center of room
+
+    public GameObject roomEdgeTopPrefab; // lazy and need all 4 in inspector
+    public GameObject roomEdgeRightPrefab; // May remove bottom three and just rotate top one
+    public GameObject roomEdgeLeftPrefab;
+    public GameObject roomEdgeBottomPrefab;
+
+    public GameObject roomCornerTopLeftPrefab;  // same problem as room edges, lazy af and have 4 when need 1
+    public GameObject roomCornerTopRightPrefab;
+    public GameObject roomCornerBottomRightPrefab;
+    public GameObject roomCornerBottomLeftPrefab;
+
+    public GameObject hallPrefab; // should be a single unit of hall
+
+    [Header("Demo Settings")]
     [SerializeField]
     GameObject cubePrefab;
     [SerializeField]
@@ -46,17 +94,29 @@ public class Generator2D : MonoBehaviour {
     HashSet<Prim.Edge> selectedEdges;
 
     void Start() {
+        Debug.Log("Generating Dungeon...");
         Generate();
+        Debug.Log("...Finished!");
     }
 
     void Generate() {
-        random = new Random(0);
+        // Allows for customs seeded runs
+        if(seed < 0) seed = new Random().Next();
+        random = new Random(seed);
+
         grid = new Grid2D<CellType>(size, Vector2Int.zero);
         rooms = new List<Room>();
 
+        Debug.Log("...Generating rooms...");
         PlaceRooms();
-        //Triangulate();
-        //CreateHallways();
+
+        Debug.Log("...Generating Triangulation...");
+        Triangulate();
+
+        Debug.Log("...Generating Hallways...");
+        CreateHallways();
+
+        // Debug.Log("...Pathfinding Hallways...");
         //PathfindHallways();
     }
 
@@ -96,6 +156,8 @@ public class Generator2D : MonoBehaviour {
                     grid[pos] = CellType.Room;
                 }
             }
+            // breaks if room exceeds a certain number
+            if(rooms.Count >= maxNumRooms) break;
         }
     }
 
@@ -107,6 +169,16 @@ public class Generator2D : MonoBehaviour {
         }
 
         delaunay = Delaunay2D.Triangulate(vertices);
+        BuildDemoDelaunay();
+    }
+
+    void BuildDemoDelaunay(){
+        foreach(var edge in delaunay.Edges){
+            Vector3 pt1 = new Vector3(edge.U.Position.x * roomScale, 0, edge.U.Position.y * roomScale);
+            Vector3 pt2 = new Vector3(edge.V.Position.x * roomScale, 0, edge.V.Position.y * roomScale);
+
+            Debug.DrawLine(pt1, pt2, Color.cyan, Mathf.Infinity, false);
+        }
     }
 
     void CreateHallways() {
@@ -184,8 +256,8 @@ public class Generator2D : MonoBehaviour {
     }
 
     void PlaceCube(Vector2Int location, Vector2Int size, Material material) {
-        GameObject go = Instantiate(cubePrefab, new Vector3(location.x, 0, location.y), Quaternion.identity);
-        go.GetComponent<Transform>().localScale = new Vector3(size.x, 1, size.y);
+        GameObject go = Instantiate(cubePrefab, new Vector3(location.x * roomScale, 0, location.y * roomScale), Quaternion.identity);
+        go.GetComponent<Transform>().localScale = new Vector3(size.x * roomScale, 1, size.y * roomScale);
         go.GetComponent<MeshRenderer>().material = material;
     }
 
