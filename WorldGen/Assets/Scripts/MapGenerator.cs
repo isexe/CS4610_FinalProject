@@ -1,67 +1,107 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = System.Random;
 
 public class MapGenerator : MonoBehaviour
 {
-    public enum DataType
+    // DataType for rooms
+    // Need one for empty, room, and hallway
+    // May add one for walls but (x) to doubt
+     public enum DataType
     {
         None,
         Room,
         Hall
     }
 
+    /// <summary>
+    /// Room class for storing info
+    /// Contains the bounds of the room
+    ///     This is composed of position and size
+    /// Has function to detect intersection between rooms
+    /// </summary>
     public class Room
     {
-        public GameObject roomGO;
         public RectInt bounds;
 
+        // contructor
+        // might add another that takes minX, maxX, minY, maxY as para
         public Room(Vector2Int position, Vector2Int size)
         {
             bounds = new RectInt(position, size);
         }
 
-        // !This shit straightup broken
-        // public bool Intersect(Room other)
-        // {
-        //     // TODO create intersection check
-        //     return bounds.Overlaps(other.bounds); //placeholder
-        // }
-        // public bool Intersect(Room b) {
-        //     return !((this.bounds.position.x >= (b.bounds.position.x + b.bounds.size.x)) || ((this.bounds.position.x + this.bounds.size.x) <= b.bounds.position.x)
-        //         || (this.bounds.position.y >= (b.bounds.position.y + b.bounds.size.y)) || ((this.bounds.position.y + this.bounds.size.y) <= b.bounds.position.y));
-        // }
+        //public  bool Intersect(Room r1, Room r2)
+        //{
+        //    return !((r1.bounds.position.x >= (r2.bounds.position.x + r2.bounds.size.x)) || ((r1.bounds.position.x + r1.bounds.size.x) <= r2.bounds.position.x)
+        //        || (r1.bounds.position.y >= (r2.bounds.position.y + r2.bounds.size.y)) || ((r1.bounds.position.y + r1.bounds.size.y) <= r2.bounds.position.y));
+        //}
+
+        // Checks if this room intersects other room
+        public bool Intersect(Room other)
+        {
+            return (this.bounds.xMin <= other.bounds.xMax && other.bounds.xMin <= this.bounds.xMax
+            && this.bounds.yMin <= other.bounds.yMax && other.bounds.yMin <= this.bounds.yMax);
+        }
     }
 
     // map settings
-    public Vector2Int mapOrigin;
+    [Header("Map Settings")]
+    [HideInInspector]  // currently map origin doesn't function properly so we don't fuck with it
+    public Vector2Int mapOrigin = new Vector2Int(0,0);  // bottom left corner of map? idrk
     public Vector2Int mapSize;
-    public int roomMaxCount;
+    public int roomGenAttempts; // pretty much just used during testing to stop inf loops
+    public int maxNumOfRooms;   // helps reduce clutter
     public Vector2Int roomMaxSize;
     public Vector2Int roomMinSize;
 
     // prefabs
-    public GameObject demoPrefab;
-    public GameObject roomPrefab;
-    public GameObject hallPrefab;
+    public GameObject demoPrefab; // not really used
+    public GameObject roomPrefab; // should be a single unit of room
+    public GameObject hallPrefab; // should be a single unit of hall
 
-    // data for algo
+    // used for seeded random gen
+    // may try to implement seeded runs like Binding of Isaac
+    Random random;
+    int seed;
+
+    // data for gen
     Grid2D<DataType> grid;
     List<Room> rooms;
 
     void Start()
     {
+        // Create line boundary for debugging
+        LineRenderer bounds = gameObject.GetComponent<LineRenderer>();
+        if(bounds != null)
+        {
+            bounds.positionCount = 4;
+            bounds.SetPosition(0, new Vector3(mapOrigin.x, 0, mapOrigin.y) + transform.position);
+            bounds.SetPosition(1, new Vector3(mapOrigin.x + mapSize.x, 0, mapOrigin.y) + transform.position);
+            bounds.SetPosition(2, new Vector3(mapOrigin.x + mapSize.x, 0, mapOrigin.y + mapSize.y) + transform.position);
+            bounds.SetPosition(3, new Vector3(mapOrigin.x, 0, mapOrigin.y + mapSize.y) + transform.position);
+        }
+
+        // Begin hell
         Debug.Log("Generating Map...");
         GenerateMap();
         Debug.Log("...Finished :)");
+        // Hope nothing's fucked
+        
+        // Draw Demo Grid for debugging
+        CreateGridDemo();
     }
 
     void GenerateMap()
     {
+        seed = new Random().Next();
+        Debug.Log("Seed: " + seed);
+        random = new Random(seed);
         grid = new Grid2D<DataType>(mapSize, mapOrigin);
-        rooms = new List<Room>(roomMaxCount);
+        rooms = new List<Room>(maxNumOfRooms);
 
-        // TODO
+        // TODO Generation "works", need to build rooms after completion
         // beings room generation
         Debug.Log("...Generating Rooms...");
         GenerateRooms();
@@ -86,26 +126,30 @@ public class MapGenerator : MonoBehaviour
     void GenerateRooms()
     {
         // will attempt to make room up to max count
-        for (int attempt = 0; attempt < roomMaxCount; attempt++)
+        for (int attempt = 0; attempt < roomGenAttempts; attempt++)
         {
             // generate random room position
-            int xPos = Random.Range(mapOrigin.x, mapSize.x);
-            int yPos = Random.Range(mapOrigin.y, mapSize.y);
-            Vector2Int tPos = new Vector2Int(xPos, yPos);
+            Vector2Int tPos = new Vector2Int(
+                random.Next(mapOrigin.x, mapSize.x),
+                random.Next(mapOrigin.y, mapSize.y)
+            );
 
             // generate random room size
-            int xSize = Random.Range(roomMinSize.x, roomMaxSize.x);
-            int ySize = Random.Range(roomMinSize.y, roomMaxSize.y);
-            Vector2Int tSize = new Vector2Int(xSize, ySize);
+            Vector2Int tSize = new Vector2Int(
+                random.Next(roomMinSize.x, roomMaxSize.x + 1),
+                random.Next(roomMinSize.y, roomMaxSize.y + 1)
+            );
 
             // make random room
             Room tRoom = new Room(tPos, tSize);
 
+            // !Maybe useless if my intersect function works - keep just incase
             // buffer for rooms
             // used to ensure no two rooms are next to one another
-            Vector2Int bufferPos = new Vector2Int(-1, -1);
-            Vector2Int bufferSize = new Vector2Int(2, 2);
-            Room roomBuffer = new Room(tPos + bufferPos, tSize + bufferSize);
+            //Room roomBuffer = new Room(
+            //    tPos + new Vector2Int(-1,-1),
+            //    tSize + new Vector2Int(2,2)
+            //);
 
             //check for validity
             bool valid = true;
@@ -115,68 +159,60 @@ public class MapGenerator : MonoBehaviour
             {
                 valid = false;
             }
+            
             // !Currently doesn't work, use collider for detection for now
-            // else
-            // {
-            //     // makes sure rooms don't intersect
-            //     foreach (Room r in rooms)
-            //     {
-            //         if (roomBuffer.Intersect(r))
-            //         {
-            //             valid = false;
-            //             break;
-            //         }
-            //     }
-            // }
+            else
+            {
+                //makes sure tRoom doesn't intersect with other rooms
+                foreach (Room r in rooms)
+                {
+                    //if (Room.Intersect(r, roomBuffer))
+                    //{
+                    //    valid = false;
+                    //    break;
+                    //}
+
+                    if (tRoom.Intersect(r))
+                    {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
 
             // if valid build room
             if (valid)
             {
-                // TODO create room
-                // TODO CreateRoom(Room room);
-                // currently used to debug
-                // This doesn't even work either :(
-                CreateRoomDemo(roomBuffer);
-                float timer = 0;
-                while(timer < 1) timer += Time.deltaTime;
-
-                // add room to rooms list
-                if(roomBuffer.roomGO != null)
+                rooms.Add(tRoom);
+                foreach(var pos in tRoom.bounds.allPositionsWithin)
                 {
-                    Destroy(roomBuffer.roomGO.gameObject);
-                    CreateRoomDemo(tRoom);
-                    tRoom.roomGO.gameObject.tag = "Room";
-                    rooms.Add(tRoom);
-                    // add room to grid
-                    foreach (var pos in tRoom.bounds.allPositionsWithin)
-                    {
-                        grid[pos] = DataType.Room;
-                    }
+                    grid[pos] = DataType.Room;
+                    // TODO Either build room unit here or after entire algo
                 }
+            }
+
+            // break if maxNumOfRooms have been generated
+            if(rooms.Count >= maxNumOfRooms)
+            {
+                break;
             }
         }
     }
 
-    void CreateRoomDemo(Room room)
+    // Doesn't work well, everything is scaled wrong and looks messy af
+    void CreateRoomDemo(Vector2Int position, Vector2Int size, Color color, float height = 0)
     {
-        // find tranform for room
-        Vector3 pos = new Vector3(room.bounds.position.x, 0, room.bounds.position.y);
-        Vector3 scale = new Vector3(room.bounds.size.x, 1, room.bounds.size.y);
-
         // create and set room
         GameObject tGO = Instantiate<GameObject>(demoPrefab);
-        tGO.transform.position = pos;
-        tGO.transform.localScale = scale;
-        tGO.GetComponent<Renderer>().material.color = Color.blue;
+        tGO.transform.position = new Vector3(position.x, height, position.y);
+        tGO.transform.localScale = new Vector3(size.x, 1, size.y);
+        tGO.GetComponent<Renderer>().material.color = color;
 
-        // Create anchor to house rooms
+        //Create anchor to house rooms
         GameObject anchor;
         anchor = GameObject.Find("anchorMap");
         if (anchor == null) anchor = new GameObject("anchorMap");
-        tGO.transform.SetParent(anchor.transform);
-
-        // Set room GameObject
-        room.roomGO = tGO.gameObject;
+        tGO.transform.SetParent(anchor.transform, true);
     }
 
     void GenerateHallways()
@@ -197,5 +233,30 @@ public class MapGenerator : MonoBehaviour
     void GenerateEnemyRoom()
     {
 
+    }
+
+    // Works for demoing grid
+    void CreateGridDemo()
+    {
+        GameObject anchor;
+        anchor = GameObject.Find("anchorGrid");
+        if (anchor == null) anchor = new GameObject("anchorGrid");
+        
+        for(int x=0; x<grid.Size.x; x++)
+        {
+            for(int y=0; y<grid.Size.y; y++)
+            {
+                DataType type = grid[x,y];
+                switch (type)
+                {
+                    case DataType.Room:
+                        GameObject cell = Instantiate<GameObject>(demoPrefab);
+                        cell.transform.position = new Vector3(x, 1, y);
+                        cell.transform.SetParent(anchor.transform, true);
+                        break;
+                    // TODO add extra stuff for hallways later
+                }
+            }
+        }
     }
 }
