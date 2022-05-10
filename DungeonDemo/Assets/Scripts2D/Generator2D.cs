@@ -116,8 +116,8 @@ public class Generator2D : MonoBehaviour {
         Debug.Log("...Generating Hallways...");
         CreateHallways();
 
-        // Debug.Log("...Pathfinding Hallways...");
-        //PathfindHallways();
+        Debug.Log("...Pathfinding Hallways...");
+        PathfindHallways();
     }
 
     void PlaceRooms() {
@@ -169,7 +169,7 @@ public class Generator2D : MonoBehaviour {
         }
 
         delaunay = Delaunay2D.Triangulate(vertices);
-        BuildDemoDelaunay();
+        // BuildDemoDelaunay();
     }
 
     void BuildDemoDelaunay(){
@@ -198,6 +198,17 @@ public class Generator2D : MonoBehaviour {
             if (random.NextDouble() < 0.125) {
                 selectedEdges.Add(edge);
             }
+        }
+
+        //BuildDemoHallways();
+    }
+
+    void BuildDemoHallways(){
+        foreach(var edge in selectedEdges){
+            Vector3 pt1 = new Vector3(edge.U.Position.x * roomScale, 0, edge.U.Position.y * roomScale);
+            Vector3 pt2 = new Vector3(edge.V.Position.x * roomScale, 0, edge.V.Position.y * roomScale);
+
+            Debug.DrawLine(pt1, pt2, Color.cyan, Mathf.Infinity, false);
         }
     }
 
