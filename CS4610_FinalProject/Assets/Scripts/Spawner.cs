@@ -13,10 +13,11 @@ public class Spawner : MonoBehaviour
     void Start()
     {
         for(int i=0; i<totalSpawned; i++){
+            if(totalSpawned>1 && Random.value < .4f) continue; // adds random chance to spawn enemy
             float x = Random.Range(minDistance.x, maxDistance.x);
             float z = Random.Range(minDistance.y, maxDistance.y);
 
-            Vector3 pos = new Vector3(this.transform.position.x + x, .1f, this.transform.position.z + z);
+            Vector3 pos = new Vector3(this.transform.position.x + x, 2f, this.transform.position.z + z);
 
             GameObject temp = Instantiate<GameObject>(prefab, pos, gameObject.transform.rotation);
             temp.transform.SetParent(this.transform);

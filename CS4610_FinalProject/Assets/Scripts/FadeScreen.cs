@@ -5,12 +5,19 @@ using UnityEngine.UI;
 
 public class FadeScreen : MonoBehaviour
 {
+    public static FadeScreen S;
     public GameObject fadeScreen;
     public float fadeTime;
 
     private float time;
-    private bool fadingIn;
-    private bool fadingOut;
+    public bool fadingIn;
+    public bool fadingOut;
+
+    void Awake(){
+        if(S == null){
+            S = this;
+        }
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -28,10 +35,17 @@ public class FadeScreen : MonoBehaviour
             FadeIn();
             if(time > fadeTime){
                 fadeScreen.SetActive(false);
+                fadingIn = false;
+                time = 0;
             }
         }
         if(fadingOut){
-
+            FadeOut();
+            if(time > fadeTime){
+                fadeScreen.SetActive(false);
+                fadingOut = false;
+                time = 0;
+            }
         }
     }
 
@@ -44,4 +58,15 @@ public class FadeScreen : MonoBehaviour
         t.a = 1-time/fadeTime;
         fadeScreen.GetComponent<Image>().color = t;
     }
+
+    void FadeOut(){
+        time += Time.deltaTime;
+
+        fadeScreen.SetActive(true);
+
+        Color t = fadeScreen.GetComponent<Image>().color;
+        t.a = time/fadeTime;
+        fadeScreen.GetComponent<Image>().color = t;
+    }
+
 }

@@ -43,7 +43,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce84b50c0b37f374bbfe89ec39ee9a02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  prefab: {fileID: 7415050535990569633, guid: 3fb4ddafbd160274ba8f07a1cf8cd5ee, type: 3}
-  totalSpawned: 3
+  prefab: {fileID: 4193974351680478728, guid: 073bea698e6588e83b56464ff9876d3f, type: 3}
+  totalSpawned: 4
   maxDistance: {x: 4, y: 4}
   minDistance: {x: -4, y: -4}

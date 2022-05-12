@@ -472,13 +472,13 @@ public class Generator2D : MonoBehaviour {
         GameObject temp; 
         // Spawn boss
         temp = Instantiate<GameObject>(bossSpawner);
-        temp.transform.position = new Vector3(bossRoom.bounds.center.x * roomScale, 25, bossRoom.bounds.center.y * roomScale);
+        temp.transform.position = new Vector3(bossRoom.bounds.center.x * roomScale, 0, bossRoom.bounds.center.y * roomScale);
         temp.transform.SetParent(dungeonAnchor.transform);
 
         // Spawn enemies
         foreach(var room in roomsLeft){
             temp = Instantiate<GameObject>(enemySpawner);
-            temp.transform.position = new Vector3(room.bounds.center.x * roomScale, 25, room.bounds.center.y * roomScale);
+            temp.transform.position = new Vector3(room.bounds.center.x * roomScale, 0, room.bounds.center.y * roomScale);
             temp.transform.SetParent(dungeonAnchor.transform);
         }
         // Spawn player
