@@ -64,20 +64,26 @@ public class Generator2D : MonoBehaviour {
     // room prefab stuff
     public float roomScale = 1;
     public GameObject roomPrefab; // should be a single unit of room
-
+    public GameObject wallPrefab;
+    public GameObject litWallPrefab;
     public GameObject chandelierPrefab; // used to light center of room
 
-    public GameObject roomEdgeTopPrefab; // lazy and need all 4 in inspector
-    public GameObject roomEdgeRightPrefab; // May remove bottom three and just rotate top one
-    public GameObject roomEdgeLeftPrefab;
-    public GameObject roomEdgeBottomPrefab;
+    // public GameObject roomEdgeTopPrefab; // lazy and need all 4 in inspector
+    // public GameObject roomEdgeRightPrefab; // May remove bottom three and just rotate top one
+    // public GameObject roomEdgeLeftPrefab;
+    // public GameObject roomEdgeBottomPrefab;
 
-    public GameObject roomCornerTopLeftPrefab;  // same problem as room edges, lazy af and have 4 when need 1
-    public GameObject roomCornerTopRightPrefab;
-    public GameObject roomCornerBottomRightPrefab;
-    public GameObject roomCornerBottomLeftPrefab;
+    // public GameObject roomCornerTopLeftPrefab;  // same problem as room edges, lazy af and have 4 when need 1
+    // public GameObject roomCornerTopRightPrefab;
+    // public GameObject roomCornerBottomRightPrefab;
+    // public GameObject roomCornerBottomLeftPrefab;
 
-    public GameObject hallPrefab; // should be a single unit of hall
+    // public GameObject hallPrefab; // should be a single unit of hall
+
+    [Header("Spawners")]
+    public GameObject playerSpawner;
+    public GameObject enemySpawner;
+    public GameObject bossSpawner;
 
     [Header("Demo Settings")]
     [SerializeField]
@@ -93,7 +99,16 @@ public class Generator2D : MonoBehaviour {
     Delaunay2D delaunay;
     HashSet<Prim.Edge> selectedEdges;
 
+    private GameObject demoAnchor;
+    private GameObject dungeonAnchor;
+
     void Start() {
+        GameObject minimap = GameObject.FindGameObjectWithTag("SecondaryCamera");
+        minimap.transform.position = new Vector3((size.x/2) * roomScale, 100, (size.y/2) * roomScale);
+
+        demoAnchor = new GameObject("demoAnchor");
+        dungeonAnchor = new GameObject("dungeonAnchor");
+
         Debug.Log("Generating Dungeon...");
         Generate();
         Debug.Log("...Finished!");
@@ -118,6 +133,12 @@ public class Generator2D : MonoBehaviour {
 
         Debug.Log("...Pathfinding Hallways...");
         PathfindHallways();
+
+        Debug.Log("...Building Dungeon...");
+        BuildDungeon();
+
+        Debug.Log("...Populating Dungeon...");
+        PopulateDungeon();
     }
 
     void PlaceRooms() {
@@ -189,18 +210,19 @@ public class Generator2D : MonoBehaviour {
         }
 
         List<Prim.Edge> mst = Prim.MinimumSpanningTree(edges, edges[0].U);
+        
 
         selectedEdges = new HashSet<Prim.Edge>(mst);
         var remainingEdges = new HashSet<Prim.Edge>(edges);
         remainingEdges.ExceptWith(selectedEdges);
-
+        
         foreach (var edge in remainingEdges) {
             if (random.NextDouble() < 0.125) {
                 selectedEdges.Add(edge);
             }
         }
 
-        //BuildDemoHallways();
+        BuildDemoHallways();
     }
 
     void BuildDemoHallways(){
@@ -267,9 +289,11 @@ public class Generator2D : MonoBehaviour {
     }
 
     void PlaceCube(Vector2Int location, Vector2Int size, Material material) {
-        GameObject go = Instantiate(cubePrefab, new Vector3(location.x * roomScale, 0, location.y * roomScale), Quaternion.identity);
+        GameObject go = Instantiate(cubePrefab, new Vector3(location.x * roomScale, 10, location.y * roomScale), Quaternion.identity);
         go.GetComponent<Transform>().localScale = new Vector3(size.x * roomScale, 1, size.y * roomScale);
         go.GetComponent<MeshRenderer>().material = material;
+
+        go.transform.SetParent(demoAnchor.transform, true);
     }
 
     void PlaceRoom(Vector2Int location, Vector2Int size) {
@@ -278,5 +302,214 @@ public class Generator2D : MonoBehaviour {
 
     void PlaceHallway(Vector2Int location) {
         PlaceCube(location, new Vector2Int(1, 1), blueMaterial);
+    }
+
+    void BuildDungeon(){
+        for(int x=0; x<grid.Size.x; x++){
+            for(int y=0; y<grid.Size.y; y++){
+                CellType cell = grid[x,y];
+                switch(cell){
+                    case CellType.Room:
+                        BuildRoom(x,y);
+                        break;
+
+                    case CellType.Hallway:
+                        BuildHallway(x,y);
+                        break;
+                }
+            }
+        }
+
+        foreach(var room in rooms){
+            // hard code height of chandelier
+            // could just set y in prefab and use that but for now this good
+            Vector3 pos = new Vector3(room.bounds.center.x * roomScale, 4.6f, room.bounds.center.y * roomScale);
+            GameObject temp = Instantiate<GameObject>(chandelierPrefab, pos, chandelierPrefab.transform.rotation);
+            temp.transform.SetParent(dungeonAnchor.transform);
+        }
+    }
+
+    void BuildHallway(int x, int y){
+        GameObject temp = Instantiate<GameObject>(roomPrefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), Quaternion.identity);
+        temp.transform.SetParent(dungeonAnchor.transform, true);
+
+        GameObject prefab = wallPrefab;
+        if(random.NextDouble() < 0.2) prefab = litWallPrefab; 
+
+        //check walls
+        // for each cell next to current check...
+        //      if edge end of grid, if so build wall
+        //      else if edge is empty, if so build wall
+        if(y-1 < 0){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            //wallTmp.transform.Rotate(new Vector3(0,0,0));  //prefab facing towards north so don't need this
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        }
+        else if(grid[x,y-1] == CellType.None){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            //wallTmp.transform.Rotate(new Vector3(0,0,0));  //prefab facing towards north so don't need this
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        }
+        
+        if(y+1>grid.Size.y){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            wallTmp.transform.Rotate(new Vector3(0,180,0));
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        } 
+        else if(grid[x,y+1] == CellType.None){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            wallTmp.transform.Rotate(new Vector3(0,180,0));
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        }
+
+        if(x-1 < 0){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            wallTmp.transform.Rotate(new Vector3(0,90,0));
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        }
+        else if(grid[x-1,y] == CellType.None){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            wallTmp.transform.Rotate(new Vector3(0,90,0));
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        }
+        
+        if(x+1>grid.Size.x){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            wallTmp.transform.Rotate(new Vector3(0,270,0));
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        }
+        else if(grid[x+1,y] == CellType.None){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            wallTmp.transform.Rotate(new Vector3(0,270,0));
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        }
+    }
+
+    void BuildRoom(int x, int y){
+        // build room
+        GameObject temp = Instantiate<GameObject>(roomPrefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), roomPrefab.transform.rotation);
+        temp.transform.SetParent(dungeonAnchor.transform, true);
+
+        GameObject prefab = wallPrefab;
+        if(random.NextDouble() < 0.1) prefab = litWallPrefab;
+
+        //check walls
+        // for each cell next to current check...
+        //      if edge end of grid, if so build wall
+        //      else if edge is empty, if so build wall
+        if(y-1 < 0){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            //wallTmp.transform.Rotate(new Vector3(0,0,0));  //prefab facing towards north so don't need this
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        }
+        else if(grid[x,y-1] == CellType.None){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            //wallTmp.transform.Rotate(new Vector3(0,0,0));  //prefab facing towards north so don't need this
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        }
+
+        if(y+1>grid.Size.y){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            wallTmp.transform.Rotate(new Vector3(0,180,0));
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        } 
+        else if(grid[x,y+1] == CellType.None){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            wallTmp.transform.Rotate(new Vector3(0,180,0));
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        }
+
+        if(x-1 < 0){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            wallTmp.transform.Rotate(new Vector3(0,90,0));
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        }
+        else if(grid[x-1,y] == CellType.None){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            wallTmp.transform.Rotate(new Vector3(0,90,0));
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        }
+
+        if(x+1>grid.Size.x){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            wallTmp.transform.Rotate(new Vector3(0,270,0));
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        }
+        else if(grid[x+1,y] == CellType.None){
+            GameObject wallTmp = Instantiate<GameObject>(prefab, new Vector3(x*roomScale + roomScale/2, 0, y*roomScale + roomScale/2), prefab.transform.rotation);
+            wallTmp.transform.Rotate(new Vector3(0,270,0));
+            wallTmp.transform.SetParent(dungeonAnchor.transform, true);
+        }
+    }
+
+    void PopulateDungeon(){
+        List<Room> roomsLeft = new List<Room>(rooms);
+        Room bossRoom;
+        Room spawnRoom;
+
+        List<Room> tempRooms = new List<Room>();
+        foreach(var edge in selectedEdges){
+            tempRooms.Add((edge.U as Vertex<Room>).Item);
+            tempRooms.Add((edge.V as Vertex<Room>).Item);
+        }
+        List<Room> possibleRooms = new List<Room>();
+        foreach(var room in roomsLeft){
+            int count = 0;
+            foreach(var tempRoom in tempRooms){
+                if(room == tempRoom) count += 1;
+            }
+            if(count == 1){
+                possibleRooms.Add(room);
+            }
+        }
+        if(possibleRooms.Count > 0) bossRoom = possibleRooms[random.Next(possibleRooms.Count)];
+        else bossRoom = rooms[0]; // backup incase there is not a single room
+        roomsLeft.Remove(bossRoom);
+
+        spawnRoom = roomsLeft[random.Next(roomsLeft.Count)];
+        roomsLeft.Remove(spawnRoom);
+        
+        GameObject temp; 
+        // Spawn boss
+        temp = Instantiate<GameObject>(bossSpawner);
+        temp.transform.position = new Vector3(bossRoom.bounds.center.x * roomScale, 25, bossRoom.bounds.center.y * roomScale);
+        temp.transform.SetParent(dungeonAnchor.transform);
+
+        // Spawn enemies
+        foreach(var room in roomsLeft){
+            temp = Instantiate<GameObject>(enemySpawner);
+            temp.transform.position = new Vector3(room.bounds.center.x * roomScale, 25, room.bounds.center.y * roomScale);
+            temp.transform.SetParent(dungeonAnchor.transform);
+        }
+        // Spawn player
+        temp = Instantiate<GameObject>(playerSpawner);
+        temp.transform.position = new Vector3(spawnRoom.bounds.center.x * roomScale, 0, spawnRoom.bounds.center.y * roomScale);
+        temp.transform.SetParent(dungeonAnchor.transform);
+
+
+        // Debug stuff for rooms
+        temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        temp.name = "BossRoom";
+        temp.GetComponent<Renderer>().material.color = Color.black;
+        temp.transform.position = new Vector3(bossRoom.bounds.center.x * roomScale, 25, bossRoom.bounds.center.y * roomScale);
+        temp.transform.localScale = temp.transform.localScale * 5;
+        temp.transform.SetParent(demoAnchor.transform);
+
+        temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        temp.name = "SpawnRoom";
+        temp.GetComponent<Renderer>().material.color = Color.blue;
+        temp.transform.position = new Vector3(spawnRoom.bounds.center.x * roomScale, 25, spawnRoom.bounds.center.y * roomScale);
+        temp.transform.localScale = temp.transform.localScale * 5;
+        temp.transform.SetParent(demoAnchor.transform);
+
+        foreach(var room in roomsLeft){
+            temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            temp.name = "EnemyRoom";
+            temp.GetComponent<Renderer>().material.color = Color.red;
+            temp.transform.position = new Vector3(room.bounds.center.x * roomScale, 25, room.bounds.center.y * roomScale);
+            temp.transform.localScale = temp.transform.localScale * 5;
+            temp.transform.SetParent(demoAnchor.transform);
+        }
+
     }
 }
