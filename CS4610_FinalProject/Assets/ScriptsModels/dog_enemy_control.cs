@@ -42,7 +42,7 @@ public class dog_enemy_control : MonoBehaviour
         {
             print("collision");
             health -= 10;
-            Destroy(collision.gameObject);
+            if(collision.name != "scimitar") Destroy(collision.gameObject);
         }
     }
 }
