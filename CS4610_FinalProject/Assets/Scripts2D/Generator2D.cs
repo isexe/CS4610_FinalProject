@@ -334,7 +334,7 @@ public class Generator2D : MonoBehaviour {
         temp.transform.SetParent(dungeonAnchor.transform, true);
 
         GameObject prefab = wallPrefab;
-        if(random.NextDouble() < 0.2) prefab = litWallPrefab; 
+        if(random.NextDouble() < 0.25) prefab = litWallPrefab; 
 
         //check walls
         // for each cell next to current check...
