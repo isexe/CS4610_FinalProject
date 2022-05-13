@@ -155,7 +155,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0763b230d22fd334bbc9441aed267b70, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  seed: 0
+  seed: -1
   size: {x: 30, y: 30}
   roomCount: 75
   maxNumRooms: 8
