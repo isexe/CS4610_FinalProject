@@ -127,9 +127,11 @@ public class Generator2D : MonoBehaviour {
 
         Debug.Log("...Generating Triangulation...");
         Triangulate();
+        // BuildDemoDelaunay();
 
         Debug.Log("...Generating Hallways...");
         CreateHallways();
+        // BuildDemoHallways();
 
         Debug.Log("...Pathfinding Hallways...");
         PathfindHallways();
@@ -190,7 +192,6 @@ public class Generator2D : MonoBehaviour {
         }
 
         delaunay = Delaunay2D.Triangulate(vertices);
-        // BuildDemoDelaunay();
     }
 
     void BuildDemoDelaunay(){
@@ -221,8 +222,6 @@ public class Generator2D : MonoBehaviour {
                 selectedEdges.Add(edge);
             }
         }
-
-        BuildDemoHallways();
     }
 
     void BuildDemoHallways(){
